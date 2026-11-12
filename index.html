@@ -246,11 +246,11 @@
   <form method="dialog" id="stageForm">
     <h3 id="stageDlgTitle">שלב תשלום</h3>
     <label>שם השלב
-      <input type="text" id="fName" required maxlength="80" placeholder="לדוגמה: גמר שלד">
+      <input type="text" id="fName" enterkeyhint="next" required maxlength="80" placeholder="לדוגמה: גמר שלד">
     </label>
     <div class="row">
       <label>אחוז ממחיר הדירה
-        <input type="number" id="fPct" min="0" max="100" step="0.01" inputmode="decimal" required>
+        <input type="number" id="fPct" min="0" max="100" step="any" enterkeyhint="next" inputmode="decimal" required>
       </label>
       <label>סכום (מחושב)
         <output class="calc num" id="fAmount"></output>
@@ -282,10 +282,10 @@
   <form method="dialog" id="setForm">
     <h3>הגדרות</h3>
     <label>שם הפרויקט
-      <input type="text" id="sName" maxlength="60" required>
+      <input type="text" id="sName" enterkeyhint="next" maxlength="60" required>
     </label>
     <label>מחיר הדירה (₪)
-      <input type="number" id="sTotalIn" min="0" step="1" inputmode="numeric" required>
+      <input type="number" id="sTotalIn" min="0" step="any" inputmode="numeric" enterkeyhint="done" required>
     </label>
     <p class="hint">אחוזי השלבים קבועים. הסכומים מחושבים מהם לפי מחיר הדירה.</p>
     <div class="actions">
@@ -329,13 +329,14 @@
 
   function clean(raw) {
     if (!raw || typeof raw !== 'object' || !Array.isArray(raw.stages)) throw new Error('bad file');
-    const total = Math.max(0, Number(raw.total) || 0);
+    let total = Math.max(0, Number(raw.total) || 0);
+    if (!total && raw.stages.some(s => s && s.pct == null)) total = raw.stages.reduce((a, s) => a + Math.max(0, Number(s && s.amount) || 0), 0);
     const r2 = n => Math.round(n * 100) / 100;
     return {
       sample: !!raw.sample,
       title: String(raw.title || 'הדירה שלנו').slice(0, 60),
       total,
-      stages: raw.stages.map(s => ({
+      stages: raw.stages.filter(s => s && typeof s === 'object').map(s => ({
         id: uid(),
         name: String(s.name || 'שלב').slice(0, 80),
         // older saves stored an amount; convert it once to a fixed percent
@@ -351,7 +352,8 @@
   const amt = s => Math.round(state.total * s.pct / 100);
   let state;
   try { state = clean(JSON.parse(localStorage.getItem(KEY))); } catch { state = sample(); }
-  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {} };
+  let saveFailed = false;
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); saveFailed = false; } catch { saveFailed = true; } };
 
   function el(tag, cls, text) {
     const e = document.createElement(tag);
@@ -405,6 +407,7 @@
     // notices
     const notices = $('notices');
     notices.replaceChildren();
+    if (saveFailed) notices.append(el('div', 'notice', 'הדפדפן לא מאפשר לשמור נתונים (אולי גלישה בסתר). השינויים יאבדו בסגירת העמוד, אז כדאי לייצא גיבוי.'));
     if (state.sample) {
       const n = el('div', 'notice info');
       n.append(el('span', null, 'אלה נתוני דוגמה. עדכנו את מחיר הדירה ואת אחוזי השלבים לפי החוזה שלכם.'));
@@ -430,6 +433,7 @@
       node.setAttribute('aria-label', `${s.name}: ${node.title}`);
       if (s.paid) node.innerHTML = CHECK; else node.textContent = i + 1;
       node.onclick = () => {
+        if (s.paid && !confirm(`לבטל את הסימון "שולם" של השלב "${s.name}"?`)) return;
         s.paid = !s.paid;
         s.paidDate = s.paid ? today : '';
         commit();
@@ -541,7 +545,13 @@
   };
 
   document.querySelectorAll('[data-close]').forEach(b => b.onclick = () => b.closest('dialog').close());
-  document.querySelectorAll('dialog').forEach(d => d.addEventListener('click', e => { if (e.target === d) d.close(); }));
+  // Enter inside a field moves on to the next field instead of saving and closing the dialog
+  document.querySelectorAll('dialog form').forEach(f => f.addEventListener('keydown', e => {
+    if (e.key !== 'Enter' || e.isComposing || !e.target.matches('input:not([type=checkbox])')) return;
+    e.preventDefault();
+    const fields = [...f.querySelectorAll('input, textarea, button[type=submit]')].filter(x => !x.closest('[hidden]'));
+    fields[fields.indexOf(e.target) + 1]?.focus();
+  }));
 
   // ---------- backup ----------
   $('exportBtn').onclick = () => {
