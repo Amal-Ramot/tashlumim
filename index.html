@@ -173,7 +173,8 @@
   }
   textarea { resize: vertical; min-height: 64px; }
   input:focus, textarea:focus, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
-  .row { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .calc { display: flex; align-items: center; min-height: 44px; padding: 10px 12px; border-radius: 12px; border: 1px dashed var(--line); font-size: 16px; font-weight: 600; color: var(--ink); }
   .check { display: flex; align-items: center; gap: 10px; font-size: 15px; color: var(--ink); padding: 10px 12px; border-radius: 12px; background: var(--bg); border: 1px solid var(--line); }
   .check input { width: 20px; height: 20px; accent-color: var(--accent); }
   .actions { display: flex; gap: 8px; align-items: center; margin-top: 6px; }
@@ -181,6 +182,7 @@
   .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
   .btn.ghost-danger { border-color: transparent; color: var(--danger); padding-inline: 8px; }
   .btn.small { padding: 10px 12px; }
+  .hint { margin: -4px 0 0; font-size: 13px; color: var(--muted); }
   .spacer { flex: 1; }
   [hidden] { display: none !important; }
 
@@ -216,7 +218,7 @@
         <div class="ring-label"><b class="num" id="pct"></b><span>שולם</span></div>
       </div>
       <div class="stats">
-        <div class="stat"><small>מחיר החוזה</small><strong class="num" id="sTotal"></strong></div>
+        <div class="stat"><small>מחיר הדירה</small><strong class="num" id="sTotal"></strong></div>
         <div class="stat paid"><small>שולם עד כה</small><strong class="num" id="sPaid"></strong></div>
         <div class="stat"><small>נותר לתשלום</small><strong class="num" id="sLeft"></strong></div>
         <div class="nextbox" id="next"></div>
@@ -247,11 +249,11 @@
       <input type="text" id="fName" required maxlength="80" placeholder="לדוגמה: גמר שלד">
     </label>
     <div class="row">
-      <label>סכום (₪)
-        <input type="number" id="fAmount" min="0" step="1" inputmode="numeric" required>
+      <label>אחוז ממחיר הדירה
+        <input type="number" id="fPct" min="0" max="100" step="0.01" inputmode="decimal" required>
       </label>
-      <label>אחוז מהחוזה
-        <input type="number" id="fPct" min="0" max="100" step="0.1" inputmode="decimal">
+      <label>סכום (מחושב)
+        <output class="calc num" id="fAmount"></output>
       </label>
     </div>
     <label>תאריך יעד (לא חובה)
@@ -282,10 +284,10 @@
     <label>שם הפרויקט
       <input type="text" id="sName" maxlength="60" required>
     </label>
-    <label>מחיר החוזה הכולל (₪)
+    <label>מחיר הדירה (₪)
       <input type="number" id="sTotalIn" min="0" step="1" inputmode="numeric" required>
     </label>
-    <label class="check"><input type="checkbox" id="sScale" checked> לעדכן את סכומי השלבים לפי אותם אחוזים</label>
+    <p class="hint">אחוזי השלבים קבועים. הסכומים מחושבים מהם לפי מחיר הדירה.</p>
     <div class="actions">
       <button class="btn primary" type="submit">שמירה</button>
       <button class="btn" type="button" data-close>ביטול</button>
@@ -304,11 +306,11 @@
   const uid = () => Math.random().toString(36).slice(2, 10);
   const todayISO = () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); };
   const fmtDate = iso => { const [y, m, d] = iso.split('-').map(Number); return dateFmt.format(new Date(y, m - 1, d)); };
-  const fmtPct = n => (Math.round(n * 10) / 10).toLocaleString('he-IL') + '%';
+  const fmtPct = n => (Math.round(n * 100) / 100).toLocaleString('he-IL') + '%';
 
   function sample() {
     const total = 1800000;
-    const s = (name, pct, extra = {}) => ({ id: uid(), name, amount: Math.round(total * pct / 100), due: '', paid: false, paidDate: '', note: '', ...extra });
+    const s = (name, pct, extra = {}) => ({ id: uid(), name, pct, due: '', paid: false, paidDate: '', note: '', ...extra });
     return {
       sample: true,
       title: 'הדירה שלנו',
@@ -327,14 +329,17 @@
 
   function clean(raw) {
     if (!raw || typeof raw !== 'object' || !Array.isArray(raw.stages)) throw new Error('bad file');
+    const total = Math.max(0, Number(raw.total) || 0);
+    const r2 = n => Math.round(n * 100) / 100;
     return {
       sample: !!raw.sample,
       title: String(raw.title || 'הדירה שלנו').slice(0, 60),
-      total: Math.max(0, Number(raw.total) || 0),
+      total,
       stages: raw.stages.map(s => ({
         id: uid(),
         name: String(s.name || 'שלב').slice(0, 80),
-        amount: Math.max(0, Number(s.amount) || 0),
+        // older saves stored an amount; convert it once to a fixed percent
+        pct: Math.min(100, Math.max(0, s.pct != null ? r2(Number(s.pct) || 0) : total ? r2((Number(s.amount) || 0) / total * 100) : 0)),
         due: /^\d{4}-\d{2}-\d{2}$/.test(s.due) ? s.due : '',
         paid: !!s.paid,
         paidDate: /^\d{4}-\d{2}-\d{2}$/.test(s.paidDate) ? s.paidDate : '',
@@ -343,6 +348,7 @@
     };
   }
 
+  const amt = s => Math.round(state.total * s.pct / 100);
   let state;
   try { state = clean(JSON.parse(localStorage.getItem(KEY))); } catch { state = sample(); }
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {} };
@@ -357,9 +363,9 @@
 
   function render() {
     const { stages } = state;
-    const sum = stages.reduce((a, s) => a + s.amount, 0);
-    const base = state.total || sum;
-    const paid = stages.reduce((a, s) => a + (s.paid ? s.amount : 0), 0);
+    const sumPct = Math.round(stages.reduce((a, s) => a + s.pct, 0) * 100) / 100;
+    const base = state.total;
+    const paid = stages.reduce((a, s) => a + (s.paid ? amt(s) : 0), 0);
     const pct = base ? Math.min(100, paid / base * 100) : 0;
     const today = todayISO();
     const nextStage = stages.find(s => !s.paid);
@@ -370,7 +376,7 @@
     $('sPaid').textContent = money.format(paid);
     $('sLeft').textContent = money.format(Math.max(0, base - paid));
     $('pct').textContent = Math.round(pct) + '%';
-    $('ring').setAttribute('aria-label', `שולמו ${Math.round(pct)} אחוזים מהחוזה`);
+    $('ring').setAttribute('aria-label', `שולמו ${Math.round(pct)} אחוזים ממחיר הדירה`);
     const C = 2 * Math.PI * 52;
     $('ringBar').style.strokeDasharray = C;
     $('ringBar').style.strokeDashoffset = C * (1 - pct / 100);
@@ -380,7 +386,7 @@
     next.replaceChildren();
     next.classList.toggle('done', !nextStage);
     if (nextStage) {
-      next.append(el('span', 'tag', 'התשלום הבא'), el('span', 'what', nextStage.name), el('strong', 'num', money.format(nextStage.amount)));
+      next.append(el('span', 'tag', 'התשלום הבא'), el('span', 'what', nextStage.name), el('strong', 'num', money.format(amt(nextStage))));
       if (nextStage.due) next.append(el('span', 'when', (nextStage.due < today ? 'היה אמור להיות ב־' : 'עד ') + fmtDate(nextStage.due)));
     } else if (stages.length) {
       next.append(el('span', 'tag', 'הכול שולם'), el('span', 'what', 'כל השלבים סומנו כשולמו 🎉'));
@@ -392,7 +398,7 @@
     const segs = $('segments');
     segs.replaceChildren(...stages.map(s => {
       const d = el('div', 'seg' + (s.paid ? ' paid' : s === nextStage ? ' next' : ''));
-      d.style.flex = Math.max(s.amount, 1) + ' 1 0';
+      d.style.flex = Math.max(s.pct, 0.5) + ' 1 0';
       return d;
     }));
 
@@ -401,17 +407,15 @@
     notices.replaceChildren();
     if (state.sample) {
       const n = el('div', 'notice info');
-      n.append(el('span', null, 'אלה נתוני דוגמה. עדכנו את מחיר החוזה ואת השלבים לפי החוזה שלכם.'));
+      n.append(el('span', null, 'אלה נתוני דוגמה. עדכנו את מחיר הדירה ואת אחוזי השלבים לפי החוזה שלכם.'));
       const b = el('button', null, 'להגדרות');
       b.type = 'button';
       b.onclick = openSettings;
       n.append(b);
       notices.append(n);
     }
-    if (state.total && stages.length && sum !== state.total) {
-      const diff = state.total - sum;
-      notices.append(el('div', 'notice',
-        diff > 0 ? `סכום השלבים נמוך ממחיר החוזה ב־${money.format(diff)}.` : `סכום השלבים גבוה ממחיר החוזה ב־${money.format(-diff)}.`));
+    if (stages.length && sumPct !== 100) {
+      notices.append(el('div', 'notice', `אחוזי השלבים מסתכמים ב־${fmtPct(sumPct)} ולא ב־100%.`));
     }
 
     // timeline
@@ -437,10 +441,10 @@
       card.onclick = () => openStage(s.id);
       card.append(el('span', 'stage-name', s.name));
 
-      const amt = el('span', 'stage-amount');
-      amt.append(el('strong', 'num', money.format(s.amount)));
-      if (base) amt.append(el('small', 'num', fmtPct(s.amount / base * 100)));
-      card.append(amt);
+      const amount = el('span', 'stage-amount');
+      amount.append(el('strong', 'num', money.format(amt(s))));
+      amount.append(el('small', 'num', fmtPct(s.pct)));
+      card.append(amount);
 
       const meta = el('span', 'stage-meta');
       if (s.paid) meta.append(el('span', 'chip paid', 'שולם'));
@@ -462,16 +466,15 @@
   // ---------- stage dialog ----------
   let editing = null; // stage id or null for new
   const stageDlg = $('stageDlg');
-  const base = () => state.total || state.stages.reduce((a, s) => a + s.amount, 0);
+  const showCalc = () => { $('fAmount').textContent = $('fPct').value === '' ? '—' : money.format(Math.round(state.total * $('fPct').value / 100)); };
 
   function openStage(id) {
     editing = id;
-    const s = state.stages.find(x => x.id === id) || { name: '', amount: '', due: '', paid: false, paidDate: '', note: '' };
+    const s = state.stages.find(x => x.id === id) || { name: '', pct: '', due: '', paid: false, paidDate: '', note: '' };
     $('stageDlgTitle').textContent = id ? 'עריכת שלב' : 'שלב חדש';
     $('fName').value = s.name;
-    $('fAmount').value = s.amount;
-    $('fPct').value = s.amount !== '' && state.total ? Math.round(s.amount / state.total * 1000) / 10 : '';
-    $('fPct').disabled = !state.total;
+    $('fPct').value = s.pct;
+    showCalc();
     $('fDue').value = s.due;
     $('fPaid').checked = s.paid;
     $('fPaidDate').value = s.paidDate;
@@ -480,8 +483,7 @@
     $('delBtn').hidden = $('upBtn').hidden = $('downBtn').hidden = !id;
     stageDlg.showModal();
   }
-  $('fAmount').oninput = () => { if (state.total) $('fPct').value = $('fAmount').value === '' ? '' : Math.round($('fAmount').value / state.total * 1000) / 10; };
-  $('fPct').oninput = () => { if ($('fPct').value !== '') $('fAmount').value = Math.round(state.total * $('fPct').value / 100); };
+  $('fPct').oninput = showCalc;
   $('fPaid').onchange = () => {
     $('paidDateWrap').hidden = !$('fPaid').checked;
     if ($('fPaid').checked && !$('fPaidDate').value) $('fPaidDate').value = todayISO();
@@ -489,7 +491,7 @@
   $('stageForm').onsubmit = () => {
     const data = {
       name: $('fName').value.trim() || 'שלב',
-      amount: Math.max(0, Math.round(Number($('fAmount').value) || 0)),
+      pct: Math.min(100, Math.max(0, Math.round((Number($('fPct').value) || 0) * 100) / 100)),
       due: $('fDue').value,
       paid: $('fPaid').checked,
       paidDate: $('fPaid').checked ? $('fPaidDate').value : '',
@@ -522,18 +524,12 @@
   function openSettings() {
     $('sName').value = state.title;
     $('sTotalIn').value = state.total || '';
-    $('sScale').checked = true;
     setDlg.showModal();
   }
   $('settingsBtn').onclick = openSettings;
   $('setForm').onsubmit = () => {
-    const newTotal = Math.max(0, Math.round(Number($('sTotalIn').value) || 0));
-    if ($('sScale').checked && state.total && newTotal && newTotal !== state.total) {
-      const k = newTotal / state.total;
-      state.stages.forEach(s => { s.amount = Math.round(s.amount * k); });
-    }
     state.title = $('sName').value.trim() || 'הדירה שלנו';
-    state.total = newTotal;
+    state.total = Math.max(0, Math.round(Number($('sTotalIn').value) || 0));
     state.sample = false;
     commit();
   };
