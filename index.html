@@ -1,0 +1,575 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>תשלומים לקבלן</title>
+<meta name="theme-color" content="#f4f1ea">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700&family=Heebo:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f4f1ea;
+    --card: #fffdf8;
+    --ink: #1f2a26;
+    --muted: #6b756f;
+    --line: #e3ded2;
+    --accent: #1f6f5c;
+    --accent-ink: #ffffff;
+    --accent-soft: #dcebe4;
+    --gold: #b97a1f;
+    --gold-soft: #f6e9d2;
+    --danger: #b4442f;
+    --danger-soft: #f6dfd9;
+    --shadow: 0 1px 2px rgba(31,42,38,.05), 0 8px 28px rgba(31,42,38,.07);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #121715;
+      --card: #1b2220;
+      --ink: #e9ece8;
+      --muted: #94a09a;
+      --line: #2b3531;
+      --accent: #5cc2a3;
+      --accent-ink: #0d1614;
+      --accent-soft: #1f3a32;
+      --gold: #e0a94f;
+      --gold-soft: #3a2f1c;
+      --danger: #e98a73;
+      --danger-soft: #3d231d;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 28px rgba(0,0,0,.35);
+    }
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Heebo", system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 28px 16px 64px; }
+  button, input, textarea { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  .num { font-variant-numeric: tabular-nums; direction: ltr; unicode-bidi: isolate; display: inline-block; }
+
+  /* ---------- header ---------- */
+  header { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 22px; }
+  .eyebrow { font-size: 13px; font-weight: 600; letter-spacing: .08em; color: var(--accent); margin: 0 0 2px; }
+  h1 { font-family: "Frank Ruhl Libre", serif; font-weight: 700; font-size: clamp(28px, 6vw, 40px); line-height: 1.15; margin: 0; text-wrap: balance; }
+  .icon-btn {
+    flex: none; border: 1px solid var(--line); background: var(--card); border-radius: 12px;
+    padding: 9px 14px; font-size: 14px; font-weight: 500; color: var(--muted);
+  }
+  .icon-btn:hover { color: var(--ink); border-color: var(--muted); }
+
+  /* ---------- hero ---------- */
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 22px; box-shadow: var(--shadow); }
+  .hero { padding: 26px; display: grid; grid-template-columns: auto 1fr; gap: 28px; align-items: center; }
+  .ring { position: relative; width: 168px; height: 168px; }
+  .ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .ring .track { stroke: var(--line); }
+  .ring .bar { stroke: var(--accent); stroke-linecap: round; transition: stroke-dashoffset .8s cubic-bezier(.2,.8,.2,1); }
+  .ring-label { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; }
+  .ring-label b { font-family: "Frank Ruhl Libre", serif; font-size: 44px; line-height: 1; font-weight: 700; }
+  .ring-label span { font-size: 13px; color: var(--muted); margin-top: 4px; }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px 20px; }
+  .stat small { display: block; font-size: 13px; color: var(--muted); }
+  .stat strong { font-size: clamp(18px, 3.4vw, 24px); font-weight: 700; }
+  .stat.paid strong { color: var(--accent); }
+  .nextbox {
+    grid-column: 1 / -1; margin-top: 14px; padding: 12px 16px; border-radius: 14px;
+    background: var(--gold-soft); display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px;
+  }
+  .nextbox .tag { font-size: 12px; font-weight: 700; color: var(--gold); letter-spacing: .04em; }
+  .nextbox .what { font-weight: 600; }
+  .nextbox .when { color: var(--muted); font-size: 14px; margin-inline-start: auto; }
+  .nextbox.done { background: var(--accent-soft); }
+  .nextbox.done .tag { color: var(--accent); }
+
+  /* ---------- segment bar ---------- */
+  .segments { display: flex; gap: 3px; padding: 0 26px 24px; }
+  .seg { height: 12px; border-radius: 4px; background: var(--line); min-width: 6px; transition: background .3s; }
+  .seg.paid { background: var(--accent); }
+  .seg.next { background: var(--gold); }
+  .seg:first-child { border-start-start-radius: 8px; border-end-start-radius: 8px; }
+  .seg:last-child { border-start-end-radius: 8px; border-end-end-radius: 8px; }
+
+  .notice {
+    margin: 14px 0 0; padding: 10px 16px; border-radius: 12px; font-size: 14px;
+    background: var(--danger-soft); color: var(--danger);
+  }
+  .notice.info { background: var(--accent-soft); color: var(--accent); display: flex; gap: 12px; align-items: center; justify-content: space-between; }
+  .notice button { border: 0; background: none; color: inherit; font-weight: 700; text-decoration: underline; padding: 0; }
+
+  /* ---------- timeline ---------- */
+  h2 { font-family: "Frank Ruhl Libre", serif; font-size: 22px; margin: 36px 0 14px; }
+  .timeline { list-style: none; margin: 0; padding: 0; position: relative; }
+  .stage { position: relative; padding-inline-start: 56px; padding-bottom: 14px; }
+  .stage::before { /* connecting line */
+    content: ""; position: absolute; inset-inline-start: 19px; top: 40px; bottom: -4px; width: 2px; background: var(--line);
+  }
+  .stage.paid::before { background: var(--accent); }
+  .stage:last-child::before { display: none; }
+  .node {
+    position: absolute; inset-inline-start: 0; top: 14px; width: 40px; height: 40px; border-radius: 50%;
+    display: grid; place-content: center; font-weight: 700; font-size: 15px;
+    background: var(--card); border: 2px solid var(--line); color: var(--muted); padding: 0;
+    transition: transform .15s, background .2s, border-color .2s;
+  }
+  .node:hover { transform: scale(1.08); border-color: var(--accent); }
+  .stage.paid .node { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .stage.next .node { border-color: var(--gold); color: var(--gold); box-shadow: 0 0 0 5px var(--gold-soft); }
+  .stage.late .node { border-color: var(--danger); color: var(--danger); box-shadow: 0 0 0 5px var(--danger-soft); }
+  .node svg { width: 18px; height: 18px; }
+
+  .stage-card {
+    display: grid; grid-template-columns: 1fr auto; gap: 4px 16px; align-items: center;
+    width: 100%; text-align: start; padding: 14px 18px; border-radius: 16px;
+    background: var(--card); border: 1px solid var(--line);
+    transition: border-color .15s, transform .15s;
+  }
+  .stage-card:hover { border-color: var(--muted); transform: translateY(-1px); }
+  .stage.next .stage-card { border-color: var(--gold); }
+  .stage.paid .stage-card { background: transparent; }
+  .stage-name { font-weight: 600; font-size: 17px; overflow-wrap: anywhere; }
+  .stage-meta { grid-column: 1; font-size: 14px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 2px 12px; align-items: center; }
+  .stage-amount { grid-row: 1 / span 2; grid-column: 2; text-align: end; }
+  .stage-amount strong { display: block; font-size: 19px; font-weight: 700; }
+  .stage-amount small { color: var(--muted); font-size: 13px; }
+  .stage.paid .stage-amount strong { color: var(--accent); }
+  .chip { font-size: 12px; font-weight: 700; padding: 2px 10px; border-radius: 99px; }
+  .chip.paid { background: var(--accent-soft); color: var(--accent); }
+  .chip.next { background: var(--gold-soft); color: var(--gold); }
+  .chip.late { background: var(--danger-soft); color: var(--danger); }
+  .stage-note { grid-column: 1 / -1; font-size: 14px; color: var(--muted); margin-top: 4px; padding-top: 8px; border-top: 1px dashed var(--line); overflow-wrap: anywhere; white-space: pre-wrap; }
+
+  .add {
+    margin-inline-start: 56px; width: calc(100% - 56px); padding: 14px; border-radius: 16px;
+    border: 2px dashed var(--line); background: none; color: var(--muted); font-weight: 600;
+  }
+  .add:hover { border-color: var(--accent); color: var(--accent); }
+
+  footer { margin-top: 40px; display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; font-size: 13px; color: var(--muted); }
+  footer p { margin: 0; flex: 1 1 260px; }
+  footer button { border: 0; background: none; color: var(--muted); text-decoration: underline; padding: 4px 0; font-size: 13px; }
+  footer button:hover { color: var(--ink); }
+
+  /* ---------- dialog ---------- */
+  dialog {
+    border: 1px solid var(--line); border-radius: 22px; background: var(--card); color: var(--ink);
+    padding: 0; width: min(460px, calc(100vw - 32px)); box-shadow: 0 24px 80px rgba(0,0,0,.3);
+  }
+  dialog::backdrop { background: rgba(15,20,18,.55); backdrop-filter: blur(3px); }
+  dialog form { padding: 24px; display: grid; gap: 14px; }
+  dialog h3 { font-family: "Frank Ruhl Libre", serif; font-size: 24px; margin: 0 0 2px; }
+  label { display: grid; gap: 5px; font-size: 13px; font-weight: 600; color: var(--muted); }
+  input[type=text], input[type=number], input[type=date], textarea {
+    width: 100%; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line);
+    background: var(--bg); font-size: 16px; font-weight: 400; color: var(--ink); min-height: 44px;
+  }
+  textarea { resize: vertical; min-height: 64px; }
+  input:focus, textarea:focus, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .row { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; }
+  .check { display: flex; align-items: center; gap: 10px; font-size: 15px; color: var(--ink); padding: 10px 12px; border-radius: 12px; background: var(--bg); border: 1px solid var(--line); }
+  .check input { width: 20px; height: 20px; accent-color: var(--accent); }
+  .actions { display: flex; gap: 8px; align-items: center; margin-top: 6px; }
+  .btn { border: 1px solid var(--line); background: var(--card); border-radius: 12px; padding: 10px 18px; font-weight: 600; }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .btn.ghost-danger { border-color: transparent; color: var(--danger); padding-inline: 8px; }
+  .btn.small { padding: 10px 12px; }
+  .spacer { flex: 1; }
+  [hidden] { display: none !important; }
+
+  @media (max-width: 600px) {
+    .hero { grid-template-columns: 1fr; justify-items: center; gap: 20px; padding: 22px 18px; }
+    .stats { width: 100%; text-align: center; gap: 8px 8px; }
+    .segments { padding: 0 18px 20px; }
+    .stage { padding-inline-start: 50px; }
+    .add { margin-inline-start: 50px; width: calc(100% - 50px); }
+    .stage-card { padding: 12px 14px; }
+    .stage-amount strong { font-size: 17px; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <p class="eyebrow">מעקב תשלומים לקבלן</p>
+      <h1 id="title"></h1>
+    </div>
+    <button class="icon-btn" id="settingsBtn" type="button">הגדרות</button>
+  </header>
+
+  <section class="card">
+    <div class="hero">
+      <div class="ring" role="img" id="ring">
+        <svg viewBox="0 0 120 120">
+          <circle class="track" cx="60" cy="60" r="52" fill="none" stroke-width="10"/>
+          <circle class="bar" id="ringBar" cx="60" cy="60" r="52" fill="none" stroke-width="10"/>
+        </svg>
+        <div class="ring-label"><b class="num" id="pct"></b><span>שולם</span></div>
+      </div>
+      <div class="stats">
+        <div class="stat"><small>מחיר החוזה</small><strong class="num" id="sTotal"></strong></div>
+        <div class="stat paid"><small>שולם עד כה</small><strong class="num" id="sPaid"></strong></div>
+        <div class="stat"><small>נותר לתשלום</small><strong class="num" id="sLeft"></strong></div>
+        <div class="nextbox" id="next"></div>
+      </div>
+    </div>
+    <div class="segments" id="segments" aria-hidden="true"></div>
+  </section>
+
+  <div id="notices"></div>
+
+  <h2>שלבי התשלום</h2>
+  <ol class="timeline" id="timeline"></ol>
+  <button class="add" id="addBtn" type="button">+ הוספת שלב</button>
+
+  <footer>
+    <p>הנתונים נשמרים רק בדפדפן שבמכשיר הזה. כדאי לייצא גיבוי מדי פעם.</p>
+    <button type="button" id="exportBtn">ייצוא גיבוי</button>
+    <button type="button" id="importBtn">ייבוא גיבוי</button>
+    <input type="file" id="importFile" accept="application/json,.json" hidden>
+  </footer>
+</div>
+
+<!-- stage dialog -->
+<dialog id="stageDlg">
+  <form method="dialog" id="stageForm">
+    <h3 id="stageDlgTitle">שלב תשלום</h3>
+    <label>שם השלב
+      <input type="text" id="fName" required maxlength="80" placeholder="לדוגמה: גמר שלד">
+    </label>
+    <div class="row">
+      <label>סכום (₪)
+        <input type="number" id="fAmount" min="0" step="1" inputmode="numeric" required>
+      </label>
+      <label>אחוז מהחוזה
+        <input type="number" id="fPct" min="0" max="100" step="0.1" inputmode="decimal">
+      </label>
+    </div>
+    <label>תאריך יעד (לא חובה)
+      <input type="date" id="fDue">
+    </label>
+    <label class="check"><input type="checkbox" id="fPaid"> שולם</label>
+    <label id="paidDateWrap" hidden>תאריך התשלום בפועל
+      <input type="date" id="fPaidDate">
+    </label>
+    <label>הערות
+      <textarea id="fNote" maxlength="400" placeholder="מספר אסמכתא, הצמדה למדד, מה סוכם…"></textarea>
+    </label>
+    <div class="actions">
+      <button class="btn primary" type="submit">שמירה</button>
+      <button class="btn" type="button" data-close>ביטול</button>
+      <span class="spacer"></span>
+      <button class="btn small" type="button" id="upBtn" title="הזזה למעלה" aria-label="הזזה למעלה">↑</button>
+      <button class="btn small" type="button" id="downBtn" title="הזזה למטה" aria-label="הזזה למטה">↓</button>
+      <button class="btn ghost-danger" type="button" id="delBtn">מחיקה</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- settings dialog -->
+<dialog id="setDlg">
+  <form method="dialog" id="setForm">
+    <h3>הגדרות</h3>
+    <label>שם הפרויקט
+      <input type="text" id="sName" maxlength="60" required>
+    </label>
+    <label>מחיר החוזה הכולל (₪)
+      <input type="number" id="sTotalIn" min="0" step="1" inputmode="numeric" required>
+    </label>
+    <label class="check"><input type="checkbox" id="sScale" checked> לעדכן את סכומי השלבים לפי אותם אחוזים</label>
+    <div class="actions">
+      <button class="btn primary" type="submit">שמירה</button>
+      <button class="btn" type="button" data-close>ביטול</button>
+      <span class="spacer"></span>
+      <button class="btn ghost-danger" type="button" id="resetBtn">מחיקת כל הנתונים</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+(() => {
+  const KEY = 'tashlumim.v1';
+  const $ = id => document.getElementById(id);
+  const money = new Intl.NumberFormat('he-IL', { style: 'currency', currency: 'ILS', maximumFractionDigits: 0 });
+  const dateFmt = new Intl.DateTimeFormat('he-IL', { day: 'numeric', month: 'long', year: 'numeric' });
+  const uid = () => Math.random().toString(36).slice(2, 10);
+  const todayISO = () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); };
+  const fmtDate = iso => { const [y, m, d] = iso.split('-').map(Number); return dateFmt.format(new Date(y, m - 1, d)); };
+  const fmtPct = n => (Math.round(n * 10) / 10).toLocaleString('he-IL') + '%';
+
+  function sample() {
+    const total = 1800000;
+    const s = (name, pct, extra = {}) => ({ id: uid(), name, amount: Math.round(total * pct / 100), due: '', paid: false, paidDate: '', note: '', ...extra });
+    return {
+      sample: true,
+      title: 'הדירה שלנו',
+      total,
+      stages: [
+        s('חתימת חוזה', 7, { paid: true }),
+        s('השלמת תשלום ראשון', 13, { paid: true }),
+        s('גמר יסודות', 15),
+        s('גמר שלד', 20),
+        s('גמר טיח פנים', 15),
+        s('גמר ריצוף וחיפוי', 15),
+        s('מסירת מפתח', 15),
+      ],
+    };
+  }
+
+  function clean(raw) {
+    if (!raw || typeof raw !== 'object' || !Array.isArray(raw.stages)) throw new Error('bad file');
+    return {
+      sample: !!raw.sample,
+      title: String(raw.title || 'הדירה שלנו').slice(0, 60),
+      total: Math.max(0, Number(raw.total) || 0),
+      stages: raw.stages.map(s => ({
+        id: uid(),
+        name: String(s.name || 'שלב').slice(0, 80),
+        amount: Math.max(0, Number(s.amount) || 0),
+        due: /^\d{4}-\d{2}-\d{2}$/.test(s.due) ? s.due : '',
+        paid: !!s.paid,
+        paidDate: /^\d{4}-\d{2}-\d{2}$/.test(s.paidDate) ? s.paidDate : '',
+        note: String(s.note || '').slice(0, 400),
+      })),
+    };
+  }
+
+  let state;
+  try { state = clean(JSON.parse(localStorage.getItem(KEY))); } catch { state = sample(); }
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {} };
+
+  function el(tag, cls, text) {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+  const CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+
+  function render() {
+    const { stages } = state;
+    const sum = stages.reduce((a, s) => a + s.amount, 0);
+    const base = state.total || sum;
+    const paid = stages.reduce((a, s) => a + (s.paid ? s.amount : 0), 0);
+    const pct = base ? Math.min(100, paid / base * 100) : 0;
+    const today = todayISO();
+    const nextStage = stages.find(s => !s.paid);
+
+    document.title = state.title + ' · תשלומים לקבלן';
+    $('title').textContent = state.title;
+    $('sTotal').textContent = money.format(base);
+    $('sPaid').textContent = money.format(paid);
+    $('sLeft').textContent = money.format(Math.max(0, base - paid));
+    $('pct').textContent = Math.round(pct) + '%';
+    $('ring').setAttribute('aria-label', `שולמו ${Math.round(pct)} אחוזים מהחוזה`);
+    const C = 2 * Math.PI * 52;
+    $('ringBar').style.strokeDasharray = C;
+    $('ringBar').style.strokeDashoffset = C * (1 - pct / 100);
+
+    // next payment
+    const next = $('next');
+    next.replaceChildren();
+    next.classList.toggle('done', !nextStage);
+    if (nextStage) {
+      next.append(el('span', 'tag', 'התשלום הבא'), el('span', 'what', nextStage.name), el('strong', 'num', money.format(nextStage.amount)));
+      if (nextStage.due) next.append(el('span', 'when', (nextStage.due < today ? 'היה אמור להיות ב־' : 'עד ') + fmtDate(nextStage.due)));
+    } else if (stages.length) {
+      next.append(el('span', 'tag', 'הכול שולם'), el('span', 'what', 'כל השלבים סומנו כשולמו 🎉'));
+    } else {
+      next.append(el('span', 'what', 'עדיין אין שלבי תשלום'));
+    }
+
+    // segments
+    const segs = $('segments');
+    segs.replaceChildren(...stages.map(s => {
+      const d = el('div', 'seg' + (s.paid ? ' paid' : s === nextStage ? ' next' : ''));
+      d.style.flex = Math.max(s.amount, 1) + ' 1 0';
+      return d;
+    }));
+
+    // notices
+    const notices = $('notices');
+    notices.replaceChildren();
+    if (state.sample) {
+      const n = el('div', 'notice info');
+      n.append(el('span', null, 'אלה נתוני דוגמה. עדכנו את מחיר החוזה ואת השלבים לפי החוזה שלכם.'));
+      const b = el('button', null, 'להגדרות');
+      b.type = 'button';
+      b.onclick = openSettings;
+      n.append(b);
+      notices.append(n);
+    }
+    if (state.total && stages.length && sum !== state.total) {
+      const diff = state.total - sum;
+      notices.append(el('div', 'notice',
+        diff > 0 ? `סכום השלבים נמוך ממחיר החוזה ב־${money.format(diff)}.` : `סכום השלבים גבוה ממחיר החוזה ב־${money.format(-diff)}.`));
+    }
+
+    // timeline
+    $('timeline').replaceChildren(...stages.map((s, i) => {
+      const late = !s.paid && s.due && s.due < today;
+      const isNext = s === nextStage;
+      const li = el('li', 'stage' + (s.paid ? ' paid' : late ? ' late' : isNext ? ' next' : ''));
+
+      const node = el('button', 'node');
+      node.type = 'button';
+      node.title = s.paid ? 'ביטול סימון "שולם"' : 'סימון כשולם';
+      node.setAttribute('aria-label', `${s.name}: ${node.title}`);
+      if (s.paid) node.innerHTML = CHECK; else node.textContent = i + 1;
+      node.onclick = () => {
+        s.paid = !s.paid;
+        s.paidDate = s.paid ? today : '';
+        commit();
+      };
+
+      const card = el('button', 'stage-card');
+      card.type = 'button';
+      card.setAttribute('aria-label', `עריכת השלב ${s.name}`);
+      card.onclick = () => openStage(s.id);
+      card.append(el('span', 'stage-name', s.name));
+
+      const amt = el('span', 'stage-amount');
+      amt.append(el('strong', 'num', money.format(s.amount)));
+      if (base) amt.append(el('small', 'num', fmtPct(s.amount / base * 100)));
+      card.append(amt);
+
+      const meta = el('span', 'stage-meta');
+      if (s.paid) meta.append(el('span', 'chip paid', 'שולם'));
+      else if (late) meta.append(el('span', 'chip late', 'באיחור'));
+      else if (isNext) meta.append(el('span', 'chip next', 'הבא בתור'));
+      if (s.paid && s.paidDate) meta.append(el('span', null, 'שולם ב־' + fmtDate(s.paidDate)));
+      else if (s.due) meta.append(el('span', null, 'יעד: ' + fmtDate(s.due)));
+      else if (!s.paid && !isNext) meta.append(el('span', null, 'טרם שולם'));
+      card.append(meta);
+
+      if (s.note) card.append(el('span', 'stage-note', s.note));
+      li.append(node, card);
+      return li;
+    }));
+  }
+
+  function commit() { save(); render(); }
+
+  // ---------- stage dialog ----------
+  let editing = null; // stage id or null for new
+  const stageDlg = $('stageDlg');
+  const base = () => state.total || state.stages.reduce((a, s) => a + s.amount, 0);
+
+  function openStage(id) {
+    editing = id;
+    const s = state.stages.find(x => x.id === id) || { name: '', amount: '', due: '', paid: false, paidDate: '', note: '' };
+    $('stageDlgTitle').textContent = id ? 'עריכת שלב' : 'שלב חדש';
+    $('fName').value = s.name;
+    $('fAmount').value = s.amount;
+    $('fPct').value = s.amount !== '' && state.total ? Math.round(s.amount / state.total * 1000) / 10 : '';
+    $('fPct').disabled = !state.total;
+    $('fDue').value = s.due;
+    $('fPaid').checked = s.paid;
+    $('fPaidDate').value = s.paidDate;
+    $('paidDateWrap').hidden = !s.paid;
+    $('fNote').value = s.note;
+    $('delBtn').hidden = $('upBtn').hidden = $('downBtn').hidden = !id;
+    stageDlg.showModal();
+  }
+  $('fAmount').oninput = () => { if (state.total) $('fPct').value = $('fAmount').value === '' ? '' : Math.round($('fAmount').value / state.total * 1000) / 10; };
+  $('fPct').oninput = () => { if ($('fPct').value !== '') $('fAmount').value = Math.round(state.total * $('fPct').value / 100); };
+  $('fPaid').onchange = () => {
+    $('paidDateWrap').hidden = !$('fPaid').checked;
+    if ($('fPaid').checked && !$('fPaidDate').value) $('fPaidDate').value = todayISO();
+  };
+  $('stageForm').onsubmit = () => {
+    const data = {
+      name: $('fName').value.trim() || 'שלב',
+      amount: Math.max(0, Math.round(Number($('fAmount').value) || 0)),
+      due: $('fDue').value,
+      paid: $('fPaid').checked,
+      paidDate: $('fPaid').checked ? $('fPaidDate').value : '',
+      note: $('fNote').value.trim(),
+    };
+    const s = state.stages.find(x => x.id === editing);
+    if (s) Object.assign(s, data); else state.stages.push({ id: uid(), ...data });
+    state.sample = false;
+    commit();
+  };
+  $('delBtn').onclick = () => {
+    if (!confirm('למחוק את השלב הזה?')) return;
+    state.stages = state.stages.filter(x => x.id !== editing);
+    state.sample = false;
+    stageDlg.close();
+    commit();
+  };
+  function move(dir) {
+    const i = state.stages.findIndex(x => x.id === editing), j = i + dir;
+    if (i < 0 || j < 0 || j >= state.stages.length) return;
+    [state.stages[i], state.stages[j]] = [state.stages[j], state.stages[i]];
+    commit();
+  }
+  $('upBtn').onclick = () => move(-1);
+  $('downBtn').onclick = () => move(1);
+  $('addBtn').onclick = () => openStage(null);
+
+  // ---------- settings ----------
+  const setDlg = $('setDlg');
+  function openSettings() {
+    $('sName').value = state.title;
+    $('sTotalIn').value = state.total || '';
+    $('sScale').checked = true;
+    setDlg.showModal();
+  }
+  $('settingsBtn').onclick = openSettings;
+  $('setForm').onsubmit = () => {
+    const newTotal = Math.max(0, Math.round(Number($('sTotalIn').value) || 0));
+    if ($('sScale').checked && state.total && newTotal && newTotal !== state.total) {
+      const k = newTotal / state.total;
+      state.stages.forEach(s => { s.amount = Math.round(s.amount * k); });
+    }
+    state.title = $('sName').value.trim() || 'הדירה שלנו';
+    state.total = newTotal;
+    state.sample = false;
+    commit();
+  };
+  $('resetBtn').onclick = () => {
+    if (!confirm('למחוק את כל הנתונים ולהתחיל מחדש? אי אפשר לבטל את הפעולה.')) return;
+    state = { sample: false, title: 'הדירה שלנו', total: 0, stages: [] };
+    setDlg.close();
+    commit();
+  };
+
+  document.querySelectorAll('[data-close]').forEach(b => b.onclick = () => b.closest('dialog').close());
+  document.querySelectorAll('dialog').forEach(d => d.addEventListener('click', e => { if (e.target === d) d.close(); }));
+
+  // ---------- backup ----------
+  $('exportBtn').onclick = () => {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' }));
+    a.download = `tashlumim-${todayISO()}.json`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  };
+  $('importBtn').onclick = () => $('importFile').click();
+  $('importFile').onchange = async e => {
+    const file = e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    try {
+      const next = clean(JSON.parse(await file.text()));
+      if (!confirm('הייבוא יחליף את הנתונים הקיימים. להמשיך?')) return;
+      state = next;
+      commit();
+    } catch { alert('הקובץ לא תקין. צריך קובץ גיבוי שיוצא מהעמוד הזה.'); }
+  };
+
+  render();
+})();
+</script>
+</body>
+</html>
