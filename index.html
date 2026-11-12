@@ -77,6 +77,8 @@
   .ring-label b { font-family: "Frank Ruhl Libre", serif; font-size: 44px; line-height: 1; font-weight: 700; }
   .ring-label span { font-size: 13px; color: var(--muted); margin-top: 4px; }
   .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px 20px; }
+  .stat-btn { border: 0; background: none; padding: 0; text-align: inherit; border-radius: 8px; }
+  .stat-btn:hover small { color: var(--accent); }
   .stat small { display: block; font-size: 13px; color: var(--muted); }
   .stat strong { font-size: clamp(18px, 3.4vw, 24px); font-weight: 700; }
   .stat.paid strong { color: var(--accent); }
@@ -174,7 +176,6 @@
   textarea { resize: vertical; min-height: 64px; }
   input:focus, textarea:focus, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
   .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .calc { display: flex; align-items: center; min-height: 44px; padding: 10px 12px; border-radius: 12px; border: 1px dashed var(--line); font-size: 16px; font-weight: 600; color: var(--ink); }
   .check { display: flex; align-items: center; gap: 10px; font-size: 15px; color: var(--ink); padding: 10px 12px; border-radius: 12px; background: var(--bg); border: 1px solid var(--line); }
   .check input { width: 20px; height: 20px; accent-color: var(--accent); }
   .actions { display: flex; gap: 8px; align-items: center; margin-top: 6px; }
@@ -218,7 +219,7 @@
         <div class="ring-label"><b class="num" id="pct"></b><span>שולם</span></div>
       </div>
       <div class="stats">
-        <div class="stat"><small>מחיר הדירה</small><strong class="num" id="sTotal"></strong></div>
+        <button type="button" class="stat stat-btn" id="priceBtn" title="עריכת מחיר הדירה"><small>מחיר הדירה ✎</small><strong class="num" id="sTotal"></strong></button>
         <div class="stat paid"><small>שולם עד כה</small><strong class="num" id="sPaid"></strong></div>
         <div class="stat"><small>נותר לתשלום</small><strong class="num" id="sLeft"></strong></div>
         <div class="nextbox" id="next"></div>
@@ -252,10 +253,11 @@
       <label>אחוז ממחיר הדירה
         <input type="number" id="fPct" min="0" max="100" step="any" enterkeyhint="next" inputmode="decimal" required>
       </label>
-      <label>סכום (מחושב)
-        <output class="calc num" id="fAmount"></output>
+      <label>סכום (₪)
+        <input type="number" id="fAmount" min="0" step="any" inputmode="numeric" enterkeyhint="next">
       </label>
     </div>
+    <p class="hint" id="fHint"></p>
     <label>תאריך יעד (לא חובה)
       <input type="date" id="fDue">
     </label>
@@ -331,7 +333,6 @@
     if (!raw || typeof raw !== 'object' || !Array.isArray(raw.stages)) throw new Error('bad file');
     let total = Math.max(0, Number(raw.total) || 0);
     if (!total && raw.stages.some(s => s && s.pct == null)) total = raw.stages.reduce((a, s) => a + Math.max(0, Number(s && s.amount) || 0), 0);
-    const r2 = n => Math.round(n * 100) / 100;
     return {
       sample: !!raw.sample,
       title: String(raw.title || 'הדירה שלנו').slice(0, 60),
@@ -340,7 +341,7 @@
         id: uid(),
         name: String(s.name || 'שלב').slice(0, 80),
         // older saves stored an amount; convert it once to a fixed percent
-        pct: Math.min(100, Math.max(0, s.pct != null ? r2(Number(s.pct) || 0) : total ? r2((Number(s.amount) || 0) / total * 100) : 0)),
+        pct: Math.min(100, Math.max(0, s.pct != null ? Number(s.pct) || 0 : total ? (Number(s.amount) || 0) / total * 100 : 0)),
         due: /^\d{4}-\d{2}-\d{2}$/.test(s.due) ? s.due : '',
         paid: !!s.paid,
         paidDate: /^\d{4}-\d{2}-\d{2}$/.test(s.paidDate) ? s.paidDate : '',
@@ -470,15 +471,21 @@
   // ---------- stage dialog ----------
   let editing = null; // stage id or null for new
   const stageDlg = $('stageDlg');
-  const showCalc = () => { $('fAmount').textContent = $('fPct').value === '' ? '—' : money.format(Math.round(state.total * $('fPct').value / 100)); };
+  const r2 = n => Math.round(n * 100) / 100;
+  let curPct = 0; // exact percent behind the two linked fields, so a typed amount is kept to the shekel
 
   function openStage(id) {
     editing = id;
     const s = state.stages.find(x => x.id === id) || { name: '', pct: '', due: '', paid: false, paidDate: '', note: '' };
     $('stageDlgTitle').textContent = id ? 'עריכת שלב' : 'שלב חדש';
     $('fName').value = s.name;
-    $('fPct').value = s.pct;
-    showCalc();
+    curPct = Number(s.pct) || 0;
+    $('fPct').value = s.pct === '' ? '' : r2(s.pct);
+    $('fAmount').value = s.pct === '' || !state.total ? '' : amt(s);
+    $('fAmount').disabled = !state.total;
+    $('fHint').textContent = state.total
+      ? 'אפשר להזין אחוז או סכום, והשני מתעדכן לבד. האחוז הוא שנשמר, והסכום נגזר ממחיר הדירה.'
+      : 'כדי להזין סכומים צריך קודם להגדיר את מחיר הדירה בהגדרות.';
     $('fDue').value = s.due;
     $('fPaid').checked = s.paid;
     $('fPaidDate').value = s.paidDate;
@@ -487,7 +494,14 @@
     $('delBtn').hidden = $('upBtn').hidden = $('downBtn').hidden = !id;
     stageDlg.showModal();
   }
-  $('fPct').oninput = showCalc;
+  $('fPct').oninput = () => {
+    curPct = Math.min(100, Math.max(0, Number($('fPct').value) || 0));
+    if (state.total) $('fAmount').value = $('fPct').value === '' ? '' : Math.round(state.total * curPct / 100);
+  };
+  $('fAmount').oninput = () => {
+    curPct = Math.min(100, Math.max(0, (Number($('fAmount').value) || 0) / state.total * 100));
+    $('fPct').value = $('fAmount').value === '' ? '' : r2(curPct);
+  };
   $('fPaid').onchange = () => {
     $('paidDateWrap').hidden = !$('fPaid').checked;
     if ($('fPaid').checked && !$('fPaidDate').value) $('fPaidDate').value = todayISO();
@@ -495,7 +509,7 @@
   $('stageForm').onsubmit = () => {
     const data = {
       name: $('fName').value.trim() || 'שלב',
-      pct: Math.min(100, Math.max(0, Math.round((Number($('fPct').value) || 0) * 100) / 100)),
+      pct: curPct,
       due: $('fDue').value,
       paid: $('fPaid').checked,
       paidDate: $('fPaid').checked ? $('fPaidDate').value : '',
@@ -530,7 +544,7 @@
     $('sTotalIn').value = state.total || '';
     setDlg.showModal();
   }
-  $('settingsBtn').onclick = openSettings;
+  $('settingsBtn').onclick = $('priceBtn').onclick = openSettings;
   $('setForm').onsubmit = () => {
     state.title = $('sName').value.trim() || 'הדירה שלנו';
     state.total = Math.max(0, Math.round(Number($('sTotalIn').value) || 0));
