@@ -169,12 +169,12 @@
   dialog form { padding: 24px; display: grid; gap: 14px; }
   dialog h3 { font-family: "Frank Ruhl Libre", serif; font-size: 24px; margin: 0 0 2px; }
   label { display: grid; gap: 5px; font-size: 13px; font-weight: 600; color: var(--muted); }
-  input[type=text], input[type=number], input[type=date], textarea {
+  input[type=text], input[type=number], input[type=date], textarea, select {
     width: 100%; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line);
     background: var(--bg); font-size: 16px; font-weight: 400; color: var(--ink); min-height: 44px;
   }
   textarea { resize: vertical; min-height: 64px; }
-  input[readonly] { background: transparent; border-style: dashed; color: var(--muted); cursor: not-allowed; }
+  input[readonly], textarea[readonly] { background: transparent; border-style: dashed; color: var(--muted); cursor: not-allowed; }
   input:focus, textarea:focus, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
   .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   .check { display: flex; align-items: center; gap: 10px; font-size: 15px; color: var(--ink); padding: 10px 12px; border-radius: 12px; background: var(--bg); border: 1px solid var(--line); }
@@ -383,6 +383,9 @@
     <label>תאריך יעד (לא חובה)
       <input type="date" id="fDue">
     </label>
+    <label id="fPosWrap">מיקום ברשימה
+      <select id="fPos"></select>
+    </label>
     <label class="check"><input type="checkbox" id="fPaid"> שולם</label>
     <label id="paidDateWrap" hidden>תאריך התשלום בפועל
       <input type="date" id="fPaidDate">
@@ -394,8 +397,6 @@
       <button class="btn primary" type="submit">שמירה</button>
       <button class="btn" type="button" data-close>ביטול</button>
       <span class="spacer"></span>
-      <button class="btn small" type="button" id="upBtn" title="הזזה למעלה" aria-label="הזזה למעלה">↑</button>
-      <button class="btn small" type="button" id="downBtn" title="הזזה למטה" aria-label="הזזה למטה">↓</button>
       <button class="btn ghost-danger" type="button" id="delBtn">מחיקה</button>
     </div>
   </form>
@@ -564,7 +565,7 @@
 
       const card = el('button', 'stage-card');
       card.type = 'button';
-      card.setAttribute('aria-label', `עריכת השלב ${s.name}`);
+      card.setAttribute('aria-label', `פרטי השלב ${s.name}`);
       card.onclick = () => openStage(s.id);
       card.append(el('span', 'stage-name', s.name));
 
@@ -599,25 +600,31 @@
   function openStage(id) {
     editing = id;
     const s = state.stages.find(x => x.id === id) || { name: '', pct: '', due: '', paid: false, paidDate: '', note: '' };
-    $('stageDlgTitle').textContent = id ? 'עריכת שלב' : 'שלב חדש';
+    const locked = !!id; // a saved stage is locked: only its paid status can change, or it can be deleted
+    $('stageDlgTitle').textContent = locked ? '🔒 ' + s.name : 'שלב חדש';
     $('fName').value = s.name;
     curPct = Number(s.pct) || 0;
     $('fPct').value = s.pct === '' ? '' : r2(s.pct);
     $('fAmount').value = s.pct === '' || !state.total ? '' : amt(s);
-    // a saved stage's value is locked: it can only be deleted and re-added
-    $('fPct').readOnly = $('fAmount').readOnly = !!id;
-    $('fAmount').disabled = !id && !state.total;
-    $('fHint').textContent = id
-      ? '🔒 הסכום של שלב שכבר נשמר נעול. כדי לשנות אותו צריך למחוק את השלב ולהוסיף אותו מחדש.'
+    for (const f of ['fName', 'fPct', 'fAmount', 'fDue', 'fNote']) $(f).readOnly = locked;
+    $('fAmount').disabled = !locked && !state.total;
+    $('fHint').textContent = locked
+      ? 'השלב נעול ואי אפשר לשנות בו שום פרט. אפשר רק לסמן אם שולם, או למחוק אותו ולהוסיף מחדש.'
       : state.total
-        ? 'אפשר להזין אחוז או סכום, והשני מתעדכן לבד. שימו לב: אחרי השמירה אי אפשר לשנות את הסכום, רק למחוק את השלב.'
+        ? 'אפשר להזין אחוז או סכום, והשני מתעדכן לבד. שימו לב: אחרי השמירה השלב ננעל, ואפשר רק לסמן אותו כשולם או למחוק.'
         : 'כדי להזין סכומים צריך קודם להגדיר את מחיר הדירה בהגדרות.';
+    $('fPosWrap').hidden = locked;
+    $('fName').placeholder = locked ? '' : 'לדוגמה: גמר שלד';
+    $('fNote').placeholder = locked ? '' : 'מספר אסמכתא, הצמדה למדד, מה סוכם…';
+    $('fPos').replaceChildren(...state.stages.map((x, i) => new Option(`לפני שלב ${i + 1}: ${x.name}`, String(i))), new Option('בסוף הרשימה', 'end', true, true));
     $('fDue').value = s.due;
     $('fPaid').checked = s.paid;
     $('fPaidDate').value = s.paidDate;
     $('paidDateWrap').hidden = !s.paid;
     $('fNote').value = s.note;
-    $('delBtn').hidden = $('upBtn').hidden = $('downBtn').hidden = !id;
+    $('fDue').closest('label').hidden = locked && !s.due;
+    $('fNote').closest('label').hidden = locked && !s.note;
+    $('delBtn').hidden = !locked;
     stageDlg.showModal();
   }
   $('fPct').oninput = () => {
@@ -642,7 +649,11 @@
       note: $('fNote').value.trim(),
     };
     const s = state.stages.find(x => x.id === editing);
-    if (s) { delete data.pct; Object.assign(s, data); } else state.stages.push({ id: uid(), ...data });
+    if (s) { s.paid = data.paid; s.paidDate = data.paidDate; } // locked: nothing else may change
+    else {
+      const pos = $('fPos').value === 'end' ? state.stages.length : Number($('fPos').value);
+      state.stages.splice(pos, 0, { id: uid(), ...data });
+    }
     state.sample = false;
     commit();
   };
@@ -653,14 +664,6 @@
     stageDlg.close();
     commit();
   };
-  function move(dir) {
-    const i = state.stages.findIndex(x => x.id === editing), j = i + dir;
-    if (i < 0 || j < 0 || j >= state.stages.length) return;
-    [state.stages[i], state.stages[j]] = [state.stages[j], state.stages[i]];
-    commit();
-  }
-  $('upBtn').onclick = () => move(-1);
-  $('downBtn').onclick = () => move(1);
   $('addBtn').onclick = () => openStage(null);
 
   // ---------- settings ----------
