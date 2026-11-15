@@ -174,6 +174,7 @@
     background: var(--bg); font-size: 16px; font-weight: 400; color: var(--ink); min-height: 44px;
   }
   textarea { resize: vertical; min-height: 64px; }
+  input[readonly] { background: transparent; border-style: dashed; color: var(--muted); cursor: not-allowed; }
   input:focus, textarea:focus, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
   .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   .check { display: flex; align-items: center; gap: 10px; font-size: 15px; color: var(--ink); padding: 10px 12px; border-radius: 12px; background: var(--bg); border: 1px solid var(--line); }
@@ -187,6 +188,75 @@
   .spacer { flex: 1; }
   [hidden] { display: none !important; }
 
+  /* ---------- tabs ---------- */
+  .tabs { display: flex; gap: 4px; padding: 4px; margin: 0 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; width: fit-content; max-width: 100%; }
+  .tab { border: 0; background: none; padding: 8px 18px; border-radius: 10px; font-weight: 600; color: var(--muted); }
+  .tab:hover { color: var(--ink); }
+  .tab[aria-selected="true"] { background: var(--accent); color: var(--accent-ink); }
+
+  /* ---------- plan ---------- */
+  .prefs { border-top: 1px solid var(--line); padding: 16px 26px 20px; display: flex; flex-wrap: wrap; gap: 14px 28px; align-items: flex-end; }
+  .pref { display: grid; gap: 6px; font-size: 13px; font-weight: 600; color: var(--muted); }
+  .toggle { display: inline-flex; gap: 2px; padding: 3px; border-radius: 12px; background: var(--bg); border: 1px solid var(--line); }
+  .toggle button { border: 0; background: none; padding: 6px 12px; border-radius: 9px; font-size: 14px; font-weight: 600; color: var(--muted); }
+  .toggle button[aria-pressed="true"] { background: var(--card); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+  .pref.ask .toggle { border-color: var(--gold); box-shadow: 0 0 0 3px var(--gold-soft); }
+  .pref input { width: 84px; min-height: 36px; padding: 6px 10px; font-size: 15px; }
+
+  .phase { margin-top: 14px; border-radius: 18px; overflow: hidden; }
+  .phase > summary { display: grid; grid-template-columns: auto 1fr auto; gap: 4px 14px; align-items: center; padding: 16px 18px; cursor: pointer; list-style: none; }
+  .phase > summary::-webkit-details-marker { display: none; }
+  .phase > summary:hover .phase-title { color: var(--accent); }
+  .phase-num { grid-row: 1 / span 2; width: 36px; height: 36px; border-radius: 50%; display: grid; place-content: center; font-weight: 700; border: 2px solid var(--line); color: var(--muted); }
+  .phase-num svg { width: 18px; height: 18px; }
+  .phase.complete .phase-num { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .phase.current .phase-num { border-color: var(--gold); color: var(--gold); box-shadow: 0 0 0 4px var(--gold-soft); }
+  .phase-title { font-family: "Frank Ruhl Libre", serif; font-weight: 700; font-size: 19px; line-height: 1.25; transition: color .15s; }
+  .phase-sub { grid-column: 2; font-size: 14px; color: var(--muted); }
+  .phase-count { grid-row: 1 / span 2; grid-column: 3; display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; color: var(--muted); }
+  .phase-count .chev { transition: transform .2s; font-size: 12px; }
+  .phase[open] .phase-count .chev { transform: rotate(180deg); }
+  .phase.complete .phase-count { color: var(--accent); }
+  .phase-bar { grid-column: 2; height: 4px; border-radius: 4px; background: var(--line); overflow: hidden; margin-top: 4px; }
+  .phase-bar i { display: block; height: 100%; background: var(--accent); border-radius: 4px; transition: width .4s; }
+
+  .items { list-style: none; margin: 0; padding: 0; }
+  .item { display: grid; grid-template-columns: auto 1fr auto; gap: 2px 14px; padding: 14px 18px; border-top: 1px solid var(--line); }
+  .tick { grid-row: 1 / span 4; width: 28px; height: 28px; margin-top: 1px; border-radius: 50%; border: 2px solid var(--muted); background: none; padding: 0; display: grid; place-content: center; color: var(--accent-ink); transition: background .15s, border-color .15s, transform .15s; }
+  .tick:hover { border-color: var(--accent); transform: scale(1.08); }
+  .tick svg { width: 15px; height: 15px; opacity: 0; }
+  .item.done .tick { background: var(--accent); border-color: var(--accent); }
+  .item.done .tick svg { opacity: 1; }
+  .item-title { font-weight: 600; overflow-wrap: anywhere; }
+  .item.done .item-title { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--line); text-decoration-thickness: 2px; }
+  .item-amount { grid-row: 1; grid-column: 3; font-weight: 700; white-space: nowrap; }
+  .item.done .item-amount { color: var(--accent); }
+  .item-detail, .item-sub, .links, .item-when { grid-column: 2 / -1; }
+  .item-detail { font-size: 14px; color: var(--muted); overflow-wrap: anywhere; }
+  .item-sub { margin: 4px 0 0; padding-inline-start: 18px; font-size: 14px; }
+  .item-when { font-size: 13px; color: var(--accent); font-weight: 500; }
+  .chip.cond { background: var(--gold-soft); color: var(--gold); margin-inline-start: 6px; vertical-align: 2px; white-space: nowrap; }
+  .links { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .link { display: inline-flex; align-items: center; gap: 6px; padding: 4px 11px; border-radius: 99px; border: 1px solid var(--line); font-size: 13px; font-weight: 600; color: var(--accent); text-decoration: none; background: var(--bg); }
+  .link:hover { border-color: var(--accent); }
+  .link .v { direction: ltr; unicode-bidi: isolate; font-weight: 500; color: var(--ink); }
+
+  .bank { margin: 0 18px 16px; padding: 14px 16px; border-radius: 14px; background: var(--bg); border: 1px dashed var(--line); display: grid; gap: 6px; font-size: 14px; }
+  .bank-row { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: center; }
+  .bank-row b { min-width: 86px; color: var(--muted); font-weight: 600; }
+  .copy { border: 1px solid var(--line); background: var(--card); border-radius: 8px; padding: 2px 10px; font-size: 13px; font-weight: 600; color: var(--accent); }
+  .bank .warn { color: var(--gold); font-weight: 600; }
+  .phase-total { display: flex; justify-content: space-between; gap: 12px; padding: 12px 18px; border-top: 1px solid var(--line); font-weight: 700; background: var(--bg); }
+  .phase-notes { margin: 0; padding: 12px 18px 14px 18px; padding-inline-start: 36px; border-top: 1px solid var(--line); font-size: 14px; color: var(--muted); background: var(--bg); }
+  .phase-notes li + li { margin-top: 4px; }
+
+  .contacts { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+  .contact { padding: 14px 16px; border-radius: 16px; }
+  .contact h4 { margin: 0; font-size: 15px; }
+  .contact p { margin: 2px 0 0; font-size: 13px; color: var(--muted); }
+  .contact .links { margin-top: 8px; }
+  .src { font-size: 13px; color: var(--muted); margin: 14px 0 0; }
+
   @media (max-width: 600px) {
     .hero { grid-template-columns: 1fr; justify-items: center; gap: 20px; padding: 22px 18px; }
     .stats { width: 100%; text-align: center; gap: 8px 8px; }
@@ -195,6 +265,11 @@
     .add { margin-inline-start: 50px; width: calc(100% - 50px); }
     .stage-card { padding: 12px 14px; }
     .stage-amount strong { font-size: 17px; }
+    .prefs { padding: 16px 18px 18px; }
+    .phase > summary, .item { padding-inline: 14px; }
+    .bank { margin-inline: 14px; }
+    .tabs { width: 100%; }
+    .tab { flex: 1; padding-inline: 8px; }
   }
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
@@ -203,12 +278,18 @@
 <div class="wrap">
   <header>
     <div>
-      <p class="eyebrow">מעקב תשלומים לקבלן</p>
+      <p class="eyebrow" id="eyebrow">מעקב תשלומים לקבלן</p>
       <h1 id="title"></h1>
     </div>
     <button class="icon-btn" id="settingsBtn" type="button">הגדרות</button>
   </header>
 
+  <nav class="tabs" role="tablist" aria-label="תצוגה">
+    <button class="tab" role="tab" type="button" data-tab="pay" id="tabPayBtn">תשלומים</button>
+    <button class="tab" role="tab" type="button" data-tab="plan" id="tabPlanBtn">תוכנית עבודה למסירה</button>
+  </nav>
+
+  <div id="tabPay" role="tabpanel" aria-labelledby="tabPayBtn">
   <section class="card">
     <div class="hero">
       <div class="ring" role="img" id="ring">
@@ -233,6 +314,47 @@
   <h2>שלבי התשלום</h2>
   <ol class="timeline" id="timeline"></ol>
   <button class="add" id="addBtn" type="button">+ הוספת שלב</button>
+  </div>
+
+  <div id="tabPlan" role="tabpanel" aria-labelledby="tabPlanBtn" hidden>
+    <section class="card">
+      <div class="hero">
+        <div class="ring" role="img" id="pRing">
+          <svg viewBox="0 0 120 120">
+            <circle class="track" cx="60" cy="60" r="52" fill="none" stroke-width="10"/>
+            <circle class="bar" id="pRingBar" cx="60" cy="60" r="52" fill="none" stroke-width="10"/>
+          </svg>
+          <div class="ring-label"><b class="num" id="pPct"></b><span>הושלם</span></div>
+        </div>
+        <div class="stats">
+          <div class="stat paid"><small>משימות שבוצעו</small><strong class="num" id="pDone"></strong></div>
+          <div class="stat"><small>תשלומים נוספים</small><strong class="num" id="pExtra"></strong></div>
+          <div class="stat"><small>מהם שולמו</small><strong class="num" id="pExtraPaid"></strong></div>
+          <div class="nextbox" id="pNext"></div>
+        </div>
+      </div>
+      <div class="prefs">
+        <div class="pref" id="prefMortgage">לקחתם משכנתא?
+          <div class="toggle" data-pref="mortgage">
+            <button type="button" data-v="yes">כן</button><button type="button" data-v="no">לא</button>
+          </div>
+        </div>
+        <div class="pref">סוג הדירה (למונה החשמל)
+          <div class="toggle" data-pref="meter">
+            <button type="button" data-v="25">רגילה</button><button type="button" data-v="40">דירת גן / גג</button>
+          </div>
+        </div>
+        <label class="pref">מס' בניין <input type="text" id="pBuilding" maxlength="10" enterkeyhint="next"></label>
+        <label class="pref">מס' דירה <input type="text" id="pApt" maxlength="10" enterkeyhint="done"></label>
+      </div>
+    </section>
+
+    <div id="phases"></div>
+
+    <h2>אנשי קשר</h2>
+    <div class="contacts" id="contacts"></div>
+    <p class="src">התוכנית נבנתה לפי שני מכתבי ההיערכות למסירה של חברת יהלם מ־11.11.26 (פרויקט "אפיקי נחל", אופקים). אם החברה תשלח עדכון, כדאי לבדוק שלא השתנה משהו.</p>
+  </div>
 
   <footer>
     <p>הנתונים נשמרים רק בדפדפן שבמכשיר הזה. כדאי לייצא גיבוי מדי פעם.</p>
@@ -294,7 +416,7 @@
       <button class="btn primary" type="submit">שמירה</button>
       <button class="btn" type="button" data-close>ביטול</button>
       <span class="spacer"></span>
-      <button class="btn ghost-danger" type="button" id="resetBtn">מחיקת כל הנתונים</button>
+      <button class="btn ghost-danger" type="button" id="resetBtn">מחיקת נתוני התשלומים</button>
     </div>
   </form>
 </dialog>
@@ -482,10 +604,14 @@
     curPct = Number(s.pct) || 0;
     $('fPct').value = s.pct === '' ? '' : r2(s.pct);
     $('fAmount').value = s.pct === '' || !state.total ? '' : amt(s);
-    $('fAmount').disabled = !state.total;
-    $('fHint').textContent = state.total
-      ? 'אפשר להזין אחוז או סכום, והשני מתעדכן לבד. האחוז הוא שנשמר, והסכום נגזר ממחיר הדירה.'
-      : 'כדי להזין סכומים צריך קודם להגדיר את מחיר הדירה בהגדרות.';
+    // a saved stage's value is locked: it can only be deleted and re-added
+    $('fPct').readOnly = $('fAmount').readOnly = !!id;
+    $('fAmount').disabled = !id && !state.total;
+    $('fHint').textContent = id
+      ? '🔒 הסכום של שלב שכבר נשמר נעול. כדי לשנות אותו צריך למחוק את השלב ולהוסיף אותו מחדש.'
+      : state.total
+        ? 'אפשר להזין אחוז או סכום, והשני מתעדכן לבד. שימו לב: אחרי השמירה אי אפשר לשנות את הסכום, רק למחוק את השלב.'
+        : 'כדי להזין סכומים צריך קודם להגדיר את מחיר הדירה בהגדרות.';
     $('fDue').value = s.due;
     $('fPaid').checked = s.paid;
     $('fPaidDate').value = s.paidDate;
@@ -516,7 +642,7 @@
       note: $('fNote').value.trim(),
     };
     const s = state.stages.find(x => x.id === editing);
-    if (s) Object.assign(s, data); else state.stages.push({ id: uid(), ...data });
+    if (s) { delete data.pct; Object.assign(s, data); } else state.stages.push({ id: uid(), ...data });
     state.sample = false;
     commit();
   };
@@ -552,7 +678,7 @@
     commit();
   };
   $('resetBtn').onclick = () => {
-    if (!confirm('למחוק את כל הנתונים ולהתחיל מחדש? אי אפשר לבטל את הפעולה.')) return;
+    if (!confirm('למחוק את כל נתוני התשלומים ולהתחיל מחדש? תוכנית העבודה לא תימחק. אי אפשר לבטל את הפעולה.')) return;
     state = { sample: false, title: 'הדירה שלנו', total: 0, stages: [] };
     setDlg.close();
     commit();
@@ -570,7 +696,7 @@
   // ---------- backup ----------
   $('exportBtn').onclick = () => {
     const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' }));
+    a.href = URL.createObjectURL(new Blob([JSON.stringify({ version: 2, payments: state, plan }, null, 2)], { type: 'application/json' }));
     a.download = `tashlumim-${todayISO()}.json`;
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
@@ -581,12 +707,264 @@
     e.target.value = '';
     if (!file) return;
     try {
-      const next = clean(JSON.parse(await file.text()));
+      const raw = JSON.parse(await file.text());
+      const next = clean(raw.payments || raw);   // older backups hold only the payments
+      const nextPlan = raw.plan ? cleanPlan(raw.plan) : null;
       if (!confirm('הייבוא יחליף את הנתונים הקיימים. להמשיך?')) return;
       state = next;
+      if (nextPlan) { plan = nextPlan; savePlan(); renderPlan(); }
       commit();
     } catch { alert('הקובץ לא תקין. צריך קובץ גיבוי שיוצא מהעמוד הזה.'); }
   };
+
+  // =================== work plan (from the developer's handover letters) ===================
+  const PKEY = 'tashlumim.plan.v1';
+  const MAIL = (v, label) => ({ label, v, href: 'mailto:' + v });
+  const TEL = (v, label) => ({ label, v, href: 'tel:' + v.replace(/[^\d*+]/g, '') });
+  const ILANA_MAIL = MAIL('ilana@yahallom.co.il', 'מנהלת הכספים');
+  const ILANA_TEL = TEL('03-7720882', 'טלפון');
+  const OFFICE_ADDR = 'רחוב תוצרת הארץ 3, פתח תקווה';
+
+  const PHASES = [
+    { id: 'status', title: 'סטטוס הפרויקט', sub: 'בטיפול החברה והוועד, לא בידיים שלכם. המסירה לא תתאפשר לפני שכל אלה יושלמו.', items: [
+      { id: 'form4', t: 'התקבל טופס 4 (אישור גמר עבודה) לכל המגרשים', d: 'לפי המכתב מ־11.11.26.', preset: '2026-11-11' },
+      { id: 'infra', t: 'הבניין חובר לחשמל ולמים' },
+      { id: 'occupancy', t: 'התקבל אישור אכלוס' },
+      { id: 'common', t: 'השטחים המשותפים נמסרו לנציגות הדיירים (ועד הבית)', d: 'תנאי מקדים למסירת הדירות בבניין. הנציגות רשאית להביא מהנדס בודק (במועד נפרד) ונציג של חברת הניהול.' },
+    ]},
+    { id: 'balance', title: 'גמר חשבון על הדירה', sub: 'רק מנהלת הכספים מנפיקה אישור מסירה. בלי גמר חשבון אין מפתח.', items: [
+      { id: 'balMail', t: 'לקבל במייל את פירוט יתרת החשבון', d: 'החברה שולחת אותו במייל נפרד. אם לא הגיע, לפנות למחלקת הכספים.', links: [ILANA_MAIL] },
+      { id: 'balCheck', t: 'לוודא את סכום היתרה מול מחלקת הכספים', d: 'מנהלת הכספים היא אילנה.', links: [ILANA_MAIL, ILANA_TEL] },
+      { id: 'mortStart', when: 'mortgage', t: 'להתחיל מול הבנק את תהליך המשכנתא לתשלום האחרון', d: 'התהליך אורך זמן רב, כדאי לטפל בזה מוקדם ככל האפשר.' },
+      { id: 'mortSign', when: 'mortgage', t: 'להעביר לחברה לחתימה את מסמכי ההתחייבות לרישום המשכנתא', d: 'לפחות 14 יום לפני שמגישים את המסמכים לבנק.', links: [ILANA_MAIL] },
+      { id: 'balPay', t: 'לשלם את יתרת התמורה על הדירה', d: 'באמצעות השובר מפנקס השוברים.' },
+    ]},
+    { id: 'extras', title: 'תשלומים נוספים', sub: 'בהעברה בנקאית לחשבון החברה. הסכומים לפי המכתב.', bank: true, items: [
+      { id: 'waterMeter', t: 'מונה מים', amount: () => 621, d: 'כולל מע"מ.' },
+      { id: 'elecMeter', t: 'מונה חשמל', amount: () => plan.meter === '40' ? 1885 : 1325,
+        d: () => plan.meter === '40' ? 'מונה מוגדל 3×40 (דירות גן וגג), כולל מע"מ.' : 'מונה 3×25, כולל מע"מ. לדירת גן או גג המונה מוגדל ועולה 1,885 ₪.' },
+      { id: 'plans', t: 'תשריטים', amount: () => 3925, d: 'לפי נספח התמורה.' },
+      { id: 'tabu', when: 'mortgage', t: 'אגרת רישום משכנתא בטאבו', amount: () => 150, d: 'או להציג אישור שהאגרה כבר שולמה.' },
+    ]},
+    { id: 'docs', when: 'mortgage', title: 'מסמכי המשכנתא לחברה', sub: 'בלי המסמכים האלה החברה לא תמסור את הדירה.', items: [
+      { id: 'rights', t: 'להציג לבנק את אישור הזכויות ממנהל מקרקעי ישראל', d: 'צורף למכתב החברה, ומופיעים בו מספרי הגוש והחלקה המעודכנים. הבנק צריך אותו כדי להוציא את טופס הבקשה לרישום הערת אזהרה.' },
+      { id: 'warnNote', t: 'לקבל מהבנק בקשה לרישום הערת אזהרה (מסמך מקור)', d: 'חתומה על ידי הבנק (חתימה וחותמת) ועל ידי הרוכשים ככל שנדרש, מאומתת על ידי עו"ד, ובה פרטי הנכס וסכום ההלוואה.' },
+      { id: 'warnMail', t: 'לשלוח את הבקשה במייל למנהלת הכספים ולקבל אישור', links: [ILANA_MAIL] },
+      { id: 'warnOrig', t: 'לתאם ולמסור את המקור במשרדי החברה', d: OFFICE_ADDR + '.' },
+    ]},
+    { id: 'iec', title: 'חשמל על שמכם', sub: 'החברה מחברת את מוני החשמל במרוכז. אתם צריכים רק להעביר את המונה על שמכם.', items: [
+      { id: 'iecReg', t: 'להירשם באתר חברת החשמל ולשייך את מונה החשמל של הדירה על שמכם', d: 'תנאי לקבלת אישור המסירה ממנהלת הכספים.', links: [{ label: 'לאתר חברת החשמל', href: 'https://www.iec.co.il/pages/cot.aspx' }] },
+    ]},
+    { id: 'approval', title: 'אישור מסירה ותיאום', sub: 'השלב שבו הכול מתחבר.', items: [
+      { id: 'approval', t: 'לקבל אישור מסירה יזמי חתום על ידי מנהלת הכספים', d: 'ניתן רק אחרי גמר החשבון, התשלומים הנוספים, המסמכים והעברת החשמל. צריך להציג אותו ביום המסירה.', links: [ILANA_MAIL, ILANA_TEL] },
+      { id: 'schedule', t: 'לתאם מועד מסירה עם צוות המסירות', d: 'הצוות יוצר קשר אחרי שהאישור נחתם.' },
+    ]},
+    { id: 'keyday', title: 'יום המסירה', sub: 'מה להביא ומה קורה במקום.', items: [
+      { id: 'ids', t: 'להביא תעודות זהות של כל הרוכשים' },
+      { id: 'approvalCopy', t: 'להביא את אישור המסירה היזמי החתום' },
+      { id: 'protocol', t: 'לעבור על הדירה ועל פרוטוקול המסירה הדיגיטלי יחד עם נציג החברה', d: 'הפרוטוקול נערך במקום, בנוכחות בעלי הנכס ונציג החברה.' },
+    ], notes: [
+      'אם אחד הרוכשים לא יכול להגיע: להביא ייפוי כוח וצילום ת"ז שלו.',
+      'אם מגיע במקומכם מישהו שלא רשום בהסכם המכר: ייפוי כוח נוטריוני וצילום ת"ז של כל הרוכשים.',
+    ]},
+    { id: 'after', title: 'אחרי קבלת המפתח: חיבורים', sub: 'העברת החשבונות על שמכם.', items: [
+      { id: 'arnona', t: 'ארנונה: לפנות למחלקת הארנונה בעיריית אופקים', d: 'אשת קשר: יוליה אלון. לצרף:', sub: ['מסמך קבלת חזקה חתום על ידי חברת יהלם', 'צילום ת"ז של כל הרוכשים הרשומים בחוזה', 'צילום הדף הראשון והאחרון של הסכם המכר'], links: [MAIL('yuliaalon@ofaqim.muni.il', 'יוליה אלון')] },
+      { id: 'waterConn', t: 'מים: בקשה מקוונת באתר תאגיד המים מי שבע', d: 'לצרף:', sub: ['מסמך העברת משלמים חתום על ידי חברת יהלם', 'מספר מד המים של הדירה'], links: [MAIL('haim@yahallom.co.il', 'חיים עזריאל, יהלם')] },
+      { id: 'gas', t: 'גז: לתאם עם נגב גז את התקנת הגז בדירה', d: 'לפני החיבור צריכים להיות בדירה כיריים או תנור משולב, מטבח מוכן ושיש מונח במקומו.', links: [TEL('*5917', 'נגב גז'), TEL('03-5228508', 'טלפון'), MAIL('sherut@negevgas.co.il', 'מייל')] },
+    ]},
+  ];
+
+  const CONTACTS = [
+    { h: 'מנהלת הכספים: אילנה', p: 'גמר חשבון, אישור מסירה, מסמכי משכנתא', links: [ILANA_MAIL, ILANA_TEL] },
+    { h: 'שירות לקוחות יהלם', p: 'שאלות כלליות, בדק ואחריות', links: [TEL('03-7720882', 'טלפון'), MAIL('service-y@yahallom.co.il', 'מייל')] },
+    { h: 'משרדי החברה (מסירת מסמכים)', p: OFFICE_ADDR },
+    { h: 'משרד ראשי', p: 'בסר סיטי פתח תקווה, בניין T קומה 12', links: [TEL('03-7720888', 'טלפון')] },
+    { h: 'חיים עזריאל, יהלם', p: 'העברת משלמים למים', links: [MAIL('haim@yahallom.co.il', 'מייל')] },
+    { h: 'ארנונה, עיריית אופקים', p: 'יוליה אלון', links: [MAIL('yuliaalon@ofaqim.muni.il', 'מייל')] },
+    { h: 'נגב גז', p: 'התקנת גז בדירה', links: [TEL('*5917', 'טלפון'), TEL('03-5228508', 'טלפון'), MAIL('sherut@negevgas.co.il', 'מייל')] },
+  ];
+
+  const ALL_IDS = PHASES.flatMap(ph => ph.items.map(i => i.id));
+  function cleanPlan(raw) {
+    raw = raw && typeof raw === 'object' ? raw : {};
+    const done = {};
+    const src = raw.done && typeof raw.done === 'object' ? raw.done : null;
+    for (const id of ALL_IDS) {
+      const v = src ? src[id] : PHASES.flatMap(ph => ph.items).find(i => i.id === id).preset;
+      if (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v)) done[id] = v;
+    }
+    return {
+      done,
+      mortgage: raw.mortgage === 'yes' || raw.mortgage === 'no' ? raw.mortgage : null,
+      meter: raw.meter === '40' ? '40' : '25',
+      building: String(raw.building || '').slice(0, 10),
+      apt: String(raw.apt || '').slice(0, 10),
+    };
+  }
+  let plan;
+  try { plan = cleanPlan(JSON.parse(localStorage.getItem(PKEY))); } catch { plan = cleanPlan(null); }
+  const savePlan = () => { try { localStorage.setItem(PKEY, JSON.stringify(plan)); saveFailed = false; } catch { saveFailed = true; } };
+
+  const val = x => typeof x === 'function' ? x() : x;
+  const shown = x => !x.when || plan.mortgage !== 'no';
+  const visiblePhases = () => PHASES.filter(shown).map(ph => ({ ...ph, items: ph.items.filter(shown) }));
+  const openPhases = new Set(); // phases the user opened/closed by hand this session
+  const closedPhases = new Set();
+
+  function linkEl(l) {
+    const a = el('a', 'link');
+    a.href = l.href;
+    if (/^https?:/.test(l.href)) { a.target = '_blank'; a.rel = 'noopener'; }
+    a.append(document.createTextNode(l.label));
+    if (l.v) a.append(el('span', 'v', l.v));
+    return a;
+  }
+  function copyBtn(text) {
+    const b = el('button', 'copy', 'העתקה');
+    b.type = 'button';
+    b.onclick = async () => {
+      try { await navigator.clipboard.writeText(text); b.textContent = 'הועתק ✓'; }
+      catch { b.textContent = 'לא הועתק'; }
+      setTimeout(() => { b.textContent = 'העתקה'; }, 1600);
+    };
+    return b;
+  }
+
+  function renderPlan() {
+    const phases = visiblePhases();
+    const items = phases.flatMap(ph => ph.items);
+    const doneCount = items.filter(i => plan.done[i.id]).length;
+    const pct = items.length ? doneCount / items.length * 100 : 0;
+    const C = 2 * Math.PI * 52;
+    $('pRingBar').style.strokeDasharray = C;
+    $('pRingBar').style.strokeDashoffset = C * (1 - pct / 100);
+    $('pPct').textContent = Math.round(pct) + '%';
+    $('pRing').setAttribute('aria-label', `הושלמו ${Math.round(pct)} אחוזים מתוכנית העבודה`);
+    $('pDone').textContent = `${doneCount} / ${items.length}`;
+    const extras = phases.find(ph => ph.id === 'extras').items;
+    $('pExtra').textContent = money.format(extras.reduce((a, i) => a + i.amount(), 0));
+    $('pExtraPaid').textContent = money.format(extras.reduce((a, i) => a + (plan.done[i.id] ? i.amount() : 0), 0));
+
+    // next step: first open task that is in your hands (skip the project-status phase)
+    const nextPhase = phases.find(ph => ph.id !== 'status' && ph.items.some(i => !plan.done[i.id]));
+    const nextItem = nextPhase && nextPhase.items.find(i => !plan.done[i.id]);
+    const nb = $('pNext');
+    nb.replaceChildren();
+    nb.classList.toggle('done', !nextItem);
+    if (nextItem) nb.append(el('span', 'tag', 'הצעד הבא'), el('span', 'what', val(nextItem.t)), el('span', 'when', nextPhase.title));
+    else nb.append(el('span', 'tag', 'הכול בוצע'), el('span', 'what', 'כל המשימות שלכם סומנו. ברוכים הבאים הביתה 🏠'));
+
+    // prefs
+    document.querySelectorAll('.toggle').forEach(tg => tg.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(plan[tg.dataset.pref] === b.dataset.v))));
+    $('prefMortgage').classList.toggle('ask', !plan.mortgage);
+    if (document.activeElement !== $('pBuilding')) $('pBuilding').value = plan.building;
+    if (document.activeElement !== $('pApt')) $('pApt').value = plan.apt;
+
+    let num = 0;
+    $('phases').replaceChildren(...phases.map(ph => {
+      num++;
+      const total = ph.items.length, done = ph.items.filter(i => plan.done[i.id]).length;
+      const complete = done === total;
+      const det = el('details', 'phase card' + (complete ? ' complete' : ph === nextPhase ? ' current' : ''));
+      det.open = openPhases.has(ph.id) || (!closedPhases.has(ph.id) && !complete);
+      det.addEventListener('toggle', () => {
+        (det.open ? openPhases : closedPhases).add(ph.id);
+        (det.open ? closedPhases : openPhases).delete(ph.id);
+      });
+
+      const sum = el('summary');
+      const n = el('span', 'phase-num');
+      if (complete) n.innerHTML = CHECK; else n.textContent = num;
+      const title = el('span', 'phase-title', ph.title);
+      if (ph.when && !plan.mortgage) title.append(el('span', 'chip cond', 'רק עם משכנתא'));
+      const count = el('span', 'phase-count');
+      count.append(el('span', 'num', `${done}/${total}`), el('span', 'chev', '▾'));
+      const bar = el('span', 'phase-bar'); const fill = el('i'); fill.style.width = (done / total * 100) + '%'; bar.append(fill);
+      sum.append(n, title, count, el('span', 'phase-sub', ph.sub), bar);
+      det.append(sum);
+
+      if (ph.bank) {
+        const bank = el('div', 'bank');
+        const row = (label, value, copy) => { const r = el('div', 'bank-row'); r.append(el('b', null, label), el('span', null, value)); if (copy) r.append(copyBtn(copy)); return r; };
+        bank.append(row('מוטב', 'יהלם ב.כ. בע"מ'), row('בנק', 'מזרחי טפחות (20)'), row('סניף', 'רמת השרון (472)'), row('מספר חשבון', '354224', '354224'));
+        const ref = plan.building || plan.apt ? `בניין ${plan.building || '?'}, דירה ${plan.apt || '?'}` : '';
+        const r = el('div', 'bank-row');
+        r.append(el('b', null, 'בפרטי ההעברה'));
+        if (ref) r.append(el('span', null, ref), copyBtn(ref));
+        else r.append(el('span', 'warn', 'חובה לציין מספר בניין ומספר דירה. אפשר למלא אותם למעלה.'));
+        bank.append(r);
+        det.append(bank);
+      }
+
+      const ul = el('ul', 'items');
+      for (const it of ph.items) {
+        const li = el('li', 'item' + (plan.done[it.id] ? ' done' : ''));
+        const tick = el('button', 'tick');
+        tick.type = 'button';
+        tick.innerHTML = CHECK;
+        tick.setAttribute('aria-pressed', String(!!plan.done[it.id]));
+        tick.setAttribute('aria-label', (plan.done[it.id] ? 'ביטול סימון: ' : 'סימון כבוצע: ') + val(it.t));
+        tick.onclick = () => {
+          if (plan.done[it.id]) delete plan.done[it.id]; else plan.done[it.id] = todayISO();
+          savePlan(); renderPlan();
+        };
+        const tl = el('span', 'item-title', val(it.t));
+        if (it.when && !plan.mortgage) tl.append(el('span', 'chip cond', 'רק עם משכנתא'));
+        li.append(tick, tl);
+        if (it.amount) li.append(el('span', 'item-amount num', money.format(it.amount())));
+        if (it.d) li.append(el('span', 'item-detail', val(it.d)));
+        if (it.sub) { const s = el('ul', 'item-sub'); it.sub.forEach(x => s.append(el('li', null, x))); li.append(s); }
+        if (it.links) { const ls = el('span', 'links'); it.links.forEach(l => ls.append(linkEl(l))); li.append(ls); }
+        if (plan.done[it.id]) li.append(el('span', 'item-when', 'בוצע ב־' + fmtDate(plan.done[it.id])));
+        ul.append(li);
+      }
+      det.append(ul);
+
+      if (ph.bank) {
+        const tot = el('div', 'phase-total');
+        tot.append(el('span', null, 'סך הכול תשלומים נוספים'), el('span', 'num', money.format(ph.items.reduce((a, i) => a + i.amount(), 0))));
+        det.append(tot);
+      }
+      if (ph.notes) { const nl = el('ul', 'phase-notes'); ph.notes.forEach(x => nl.append(el('li', null, x))); det.append(nl); }
+      return det;
+    }));
+
+    $('contacts').replaceChildren(...CONTACTS.map(c => {
+      const d = el('div', 'contact card');
+      d.append(el('h4', null, c.h), el('p', null, c.p));
+      if (c.links) { const ls = el('div', 'links'); c.links.forEach(l => ls.append(linkEl(l))); d.append(ls); }
+      return d;
+    }));
+  }
+
+  document.querySelectorAll('.toggle').forEach(tg => tg.addEventListener('click', e => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    plan[tg.dataset.pref] = b.dataset.v;
+    savePlan(); renderPlan();
+  }));
+  for (const [id, key] of [['pBuilding', 'building'], ['pApt', 'apt']]) {
+    $(id).addEventListener('input', () => { plan[key] = $(id).value.trim(); savePlan(); renderPlan(); });
+    $(id).addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); } });
+  }
+
+  // ---------- tabs ----------
+  function showTab(name) {
+    const isPlan = name === 'plan';
+    $('tabPay').hidden = isPlan;
+    $('tabPlan').hidden = !isPlan;
+    $('tabPayBtn').setAttribute('aria-selected', String(!isPlan));
+    $('tabPlanBtn').setAttribute('aria-selected', String(isPlan));
+    $('settingsBtn').hidden = isPlan;
+    $('eyebrow').textContent = isPlan ? 'תוכנית עבודה לקראת המסירה' : 'מעקב תשלומים לקבלן';
+  }
+  document.querySelectorAll('.tab').forEach(b => b.onclick = () => {
+    history.replaceState(null, '', b.dataset.tab === 'plan' ? '#plan' : location.pathname + location.search);
+    showTab(b.dataset.tab);
+  });
+  window.addEventListener('hashchange', () => showTab(location.hash === '#plan' ? 'plan' : 'pay'));
+  showTab(location.hash === '#plan' ? 'plan' : 'pay');
+  renderPlan();
 
   render();
 })();
