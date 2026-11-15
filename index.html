@@ -25,7 +25,7 @@
     --shadow: 0 1px 2px rgba(31,42,38,.05), 0 8px 28px rgba(31,42,38,.07);
   }
   @media (prefers-color-scheme: dark) {
-    :root {
+    :root:not([data-theme="light"]) {
       --bg: #121715;
       --card: #1b2220;
       --ink: #e9ece8;
@@ -39,7 +39,24 @@
       --danger: #e98a73;
       --danger-soft: #3d231d;
       --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 28px rgba(0,0,0,.35);
+      color-scheme: dark;
     }
+  }
+  :root[data-theme="dark"] {
+    --bg: #121715;
+    --card: #1b2220;
+    --ink: #e9ece8;
+    --muted: #94a09a;
+    --line: #2b3531;
+    --accent: #5cc2a3;
+    --accent-ink: #0d1614;
+    --accent-soft: #1f3a32;
+    --gold: #e0a94f;
+    --gold-soft: #3a2f1c;
+    --danger: #e98a73;
+    --danger-soft: #3d231d;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 28px rgba(0,0,0,.35);
+    color-scheme: dark;
   }
   * { box-sizing: border-box; }
   html { -webkit-text-size-adjust: 100%; }
@@ -51,7 +68,7 @@
     font-size: 16px;
     line-height: 1.5;
   }
-  .wrap { max-width: 860px; margin: 0 auto; padding: 28px 16px 64px; }
+  .wrap { max-width: 860px; margin: 0 auto; padding-block: 28px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
   button, input, textarea { font: inherit; color: inherit; }
   button { cursor: pointer; }
   .num { font-variant-numeric: tabular-nums; direction: ltr; unicode-bidi: isolate; display: inline-block; }
@@ -105,6 +122,7 @@
     background: var(--danger-soft); color: var(--danger);
   }
   .notice.info { background: var(--accent-soft); color: var(--accent); display: flex; gap: 12px; align-items: center; justify-content: space-between; }
+  #cloudLink { margin: 0 0 18px; flex-wrap: wrap; }
   .notice button { border: 0; background: none; color: inherit; font-weight: 700; text-decoration: underline; padding: 0; }
 
   /* ---------- timeline ---------- */
@@ -187,6 +205,17 @@
   .hint { margin: -4px 0 0; font-size: 13px; color: var(--muted); }
   .spacer { flex: 1; }
   [hidden] { display: none !important; }
+  .sync { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 13px; font-weight: 600; color: var(--muted); }
+  .sync::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--line); }
+  .sync[data-s="synced"] { color: var(--accent); }
+  .sync[data-s="synced"]::before { background: var(--accent); }
+  .sync[data-s="saving"]::before, .sync[data-s="connecting"]::before { background: var(--gold); animation: pulse 1s infinite alternate; }
+  .sync[data-s="offline"], .sync[data-s="error"], .sync[data-s="signedout"] { color: var(--danger); }
+  .sync[data-s="offline"]::before, .sync[data-s="error"]::before, .sync[data-s="signedout"]::before { background: var(--danger); }
+  @keyframes pulse { to { opacity: .3; } }
+  .toast { position: fixed; inset-inline: 0; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); margin: 0 auto; width: fit-content; max-width: calc(100% - 32px); padding: 10px 18px; border-radius: 12px; background: var(--ink); color: var(--bg); font-size: 14px; font-weight: 600; box-shadow: var(--shadow); z-index: 20; }
+  #askDlg p { margin: 0; font-size: 17px; font-weight: 500; white-space: pre-line; }
+  .btn.danger { background: var(--danger); border-color: var(--danger); color: var(--card); }
 
   /* ---------- tabs ---------- */
   .tabs { display: flex; gap: 4px; padding: 4px; margin: 0 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; width: fit-content; max-width: 100%; }
@@ -280,9 +309,15 @@
     <div>
       <p class="eyebrow" id="eyebrow">מעקב תשלומים לקבלן</p>
       <h1 id="title"></h1>
+      <span class="sync" id="sync" hidden></span>
     </div>
     <button class="icon-btn" id="settingsBtn" type="button">הגדרות</button>
   </header>
+
+  <div class="notice info" id="cloudLink" hidden>
+    <span>זו גרסה ישנה שנשמרת רק במכשיר הזה. הגרסה ששומרת בענן ונפתחת מכל מכשיר נמצאת ב-Claude.</span>
+    <a class="link" href="https://claude.ai/artifact/Wj7ti3HK7PvnxreKirYHNA" target="_blank" rel="noopener">לגרסה בענן</a>
+  </div>
 
   <nav class="tabs" role="tablist" aria-label="תצוגה">
     <button class="tab" role="tab" type="button" data-tab="pay" id="tabPayBtn">תשלומים</button>
@@ -357,12 +392,25 @@
   </div>
 
   <footer>
-    <p>הנתונים נשמרים רק בדפדפן שבמכשיר הזה. כדאי לייצא גיבוי מדי פעם.</p>
+    <p id="storageNote">הנתונים נשמרים רק בדפדפן שבמכשיר הזה. כדאי לייצא גיבוי מדי פעם.</p>
     <button type="button" id="exportBtn">ייצוא גיבוי</button>
     <button type="button" id="importBtn">ייבוא גיבוי</button>
     <input type="file" id="importFile" accept="application/json,.json" hidden>
   </footer>
 </div>
+
+<div class="toast" id="toast" role="status" hidden></div>
+
+<!-- confirmation dialog (the browser's confirm() is blocked inside claude.ai) -->
+<dialog id="askDlg">
+  <form method="dialog">
+    <p id="askMsg"></p>
+    <div class="actions">
+      <button class="btn primary" value="ok" id="askOk">אישור</button>
+      <button class="btn" value="cancel">ביטול</button>
+    </div>
+  </form>
+</dialog>
 
 <!-- stage dialog -->
 <dialog id="stageDlg">
@@ -425,6 +473,7 @@
 <script>
 (() => {
   const KEY = 'tashlumim.v1';
+  const PKEY = 'tashlumim.plan.v1';
   const $ = id => document.getElementById(id);
   const money = new Intl.NumberFormat('he-IL', { style: 'currency', currency: 'ILS', maximumFractionDigits: 0 });
   const dateFmt = new Intl.DateTimeFormat('he-IL', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -461,7 +510,7 @@
       title: String(raw.title || 'הדירה שלנו').slice(0, 60),
       total,
       stages: raw.stages.filter(s => s && typeof s === 'object').map(s => ({
-        id: uid(),
+        id: typeof s.id === 'string' && /^[a-z0-9]{1,16}$/.test(s.id) ? s.id : uid(),
         name: String(s.name || 'שלב').slice(0, 80),
         // older saves stored an amount; convert it once to a fixed percent
         pct: Math.min(100, Math.max(0, s.pct != null ? Number(s.pct) || 0 : total ? (Number(s.amount) || 0) / total * 100 : 0)),
@@ -477,7 +526,106 @@
   let state;
   try { state = clean(JSON.parse(localStorage.getItem(KEY))); } catch { state = sample(); }
   let saveFailed = false;
-  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); saveFailed = false; } catch { saveFailed = true; } };
+  // Every change goes to a local cache, and to the cloud document when this page runs inside claude.ai.
+  const save = () => { cacheLocal(); scheduleCloud(); };
+  function cacheLocal() {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); localStorage.setItem(PKEY, JSON.stringify(plan)); saveFailed = false; }
+    catch { saveFailed = !cloud; }
+  }
+
+  // ---------- cloud (claude.ai db: one private document per person) ----------
+  const IN_CLAUDE = !!(window.claude && window.claude.use);
+  let cloud = null;           // DocumentReference once connected
+  let cloudReady = false;     // first answer from the store has arrived
+  let dirty = false, writing = false, writeTimer = null, lastWritten = 0, connectTimer = null;
+  const SYNC_TEXT = {
+    connecting: 'מתחבר לענן…', saving: 'שומר בענן…', synced: 'נשמר בענן',
+    offline: 'אין חיבור לענן כרגע. השינויים יישמרו כשהחיבור יחזור',
+    error: 'השמירה בענן נכשלה. נסו לרענן את הדף',
+    signedout: 'לא מחובר לחשבון. השינויים נשמרים רק במכשיר הזה',
+  };
+  function setSync(s) {
+    const elx = $('sync');
+    elx.hidden = !SYNC_TEXT[s];
+    elx.dataset.s = s;
+    elx.textContent = SYNC_TEXT[s] || '';
+  }
+  function scheduleCloud() {
+    if (!cloud) return;
+    dirty = true;
+    setSync('saving');
+    clearTimeout(writeTimer);
+    writeTimer = setTimeout(flush, 500);
+  }
+  async function flush() {
+    if (!cloud || !cloudReady || writing || !dirty) return;
+    writing = true; dirty = false;
+    const body = { version: 2, payments: state, plan, updatedAt: Date.now() };
+    lastWritten = body.updatedAt;
+    let retry = false;
+    try {
+      await cloud.set(JSON.parse(JSON.stringify(body)));
+      if (!dirty) setSync('synced');
+    } catch (e) {
+      if (e && (e.code === 'unavailable' || e.code === 'resource_exhausted')) { dirty = true; retry = true; setSync('offline'); }
+      else setSync('error');
+    } finally {
+      writing = false;
+      if (dirty) { clearTimeout(writeTimer); writeTimer = setTimeout(flush, retry ? 2000 + Math.random() * 2000 : 300); }
+    }
+  }
+  async function initCloud() {
+    if (!IN_CLAUDE) { $('cloudLink').hidden = false; return; }
+    setSync('connecting');
+    const [db, user] = await Promise.all([claude.use('db'), claude.use('user')]);
+    const uid = user ? await user.id() : null;
+    if (!db || !uid) { setSync('signedout'); return; }
+    cloud = db.doc('data/users/' + uid + '/app');
+    $('storageNote').textContent = 'הנתונים נשמרים בענן, בחשבון Claude שלכם, ורק אתם רואים אותם. אפשר לפתוח ולערוך מכל מכשיר.';
+    connectTimer = setTimeout(() => { if (!cloudReady) setSync('offline'); }, 10000);
+    cloud.onSnapshot(snap => {
+      if (!snap.metadata.fromCache) clearTimeout(connectTimer);
+      if (snap.metadata.hasPendingWrites) return;
+      const first = !cloudReady;
+      cloudReady = true;
+      if (!snap.exists) {
+        // nothing in the cloud yet: upload what this device has, unless it is only the example data
+        if (first && !state.sample) { dirty = true; flush(); } else if (!dirty) setSync('synced');
+        return;
+      }
+      const d = snap.data();
+      if (!first && (dirty || writing || d.updatedAt === lastWritten)) { if (!dirty && !writing) setSync('synced'); return; }
+      try {
+        state = clean(d.payments);
+        plan = cleanPlan(d.plan);
+      } catch { setSync('error'); return; }
+      dirty = false;
+      lastWritten = d.updatedAt;
+      cacheLocal();
+      render(); renderPlan();
+      setSync('synced');
+    }, () => setSync('error'));
+  }
+
+  // ---------- in-page confirm + toast ----------
+  function ask(msg, okLabel = 'אישור', danger = false) {
+    return new Promise(resolve => {
+      const d = $('askDlg');
+      $('askMsg').textContent = msg;
+      $('askOk').textContent = okLabel;
+      $('askOk').className = 'btn ' + (danger ? 'danger' : 'primary');
+      d.returnValue = '';
+      d.addEventListener('close', () => resolve(d.returnValue === 'ok'), { once: true });
+      d.showModal();
+    });
+  }
+  let toastTimer = null;
+  function toast(msg) {
+    $('toast').textContent = msg;
+    $('toast').hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { $('toast').hidden = true; }, 3200);
+  }
 
   function el(tag, cls, text) {
     const e = document.createElement(tag);
@@ -556,8 +704,8 @@
       node.title = s.paid ? 'ביטול סימון "שולם"' : 'סימון כשולם';
       node.setAttribute('aria-label', `${s.name}: ${node.title}`);
       if (s.paid) node.innerHTML = CHECK; else node.textContent = i + 1;
-      node.onclick = () => {
-        if (s.paid && !confirm(`לבטל את הסימון "שולם" של השלב "${s.name}"?`)) return;
+      node.onclick = async () => {
+        if (s.paid && !(await ask(`לבטל את הסימון "שולם" של השלב "${s.name}"?`, 'ביטול הסימון'))) return;
         s.paid = !s.paid;
         s.paidDate = s.paid ? today : '';
         commit();
@@ -657,8 +805,9 @@
     state.sample = false;
     commit();
   };
-  $('delBtn').onclick = () => {
-    if (!confirm('למחוק את השלב הזה?')) return;
+  $('delBtn').onclick = async () => {
+    const s = state.stages.find(x => x.id === editing);
+    if (!(await ask(`למחוק את השלב "${s ? s.name : ''}"?\nאי אפשר לבטל את הפעולה.`, 'מחיקה', true))) return;
     state.stages = state.stages.filter(x => x.id !== editing);
     state.sample = false;
     stageDlg.close();
@@ -680,8 +829,8 @@
     state.sample = false;
     commit();
   };
-  $('resetBtn').onclick = () => {
-    if (!confirm('למחוק את כל נתוני התשלומים ולהתחיל מחדש? תוכנית העבודה לא תימחק. אי אפשר לבטל את הפעולה.')) return;
+  $('resetBtn').onclick = async () => {
+    if (!(await ask('למחוק את כל נתוני התשלומים ולהתחיל מחדש?\nתוכנית העבודה לא תימחק. אי אפשר לבטל את הפעולה.', 'מחיקת הכול', true))) return;
     state = { sample: false, title: 'הדירה שלנו', total: 0, stages: [] };
     setDlg.close();
     commit();
@@ -697,10 +846,19 @@
   }));
 
   // ---------- backup ----------
-  $('exportBtn').onclick = () => {
+  $('exportBtn').onclick = async () => {
+    const json = JSON.stringify({ version: 2, payments: state, plan }, null, 2);
+    const filename = `tashlumim-${todayISO()}.json`;
+    if (IN_CLAUDE) {
+      const dl = await claude.use('downloads');
+      if (!dl) { toast('אי אפשר לשמור קבצים בתצוגה הזו'); return; }
+      try { await dl.save({ filename, data: json }); }
+      catch (e) { if (!e || e.code !== 'declined') toast('שמירת הקובץ נכשלה'); }
+      return;
+    }
     const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob([JSON.stringify({ version: 2, payments: state, plan }, null, 2)], { type: 'application/json' }));
-    a.download = `tashlumim-${todayISO()}.json`;
+    a.href = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
+    a.download = filename;
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   };
@@ -713,15 +871,15 @@
       const raw = JSON.parse(await file.text());
       const next = clean(raw.payments || raw);   // older backups hold only the payments
       const nextPlan = raw.plan ? cleanPlan(raw.plan) : null;
-      if (!confirm('הייבוא יחליף את הנתונים הקיימים. להמשיך?')) return;
+      if (!(await ask('הייבוא יחליף את כל הנתונים הקיימים בנתונים מהקובץ. להמשיך?', 'ייבוא'))) return;
       state = next;
-      if (nextPlan) { plan = nextPlan; savePlan(); renderPlan(); }
-      commit();
-    } catch { alert('הקובץ לא תקין. צריך קובץ גיבוי שיוצא מהעמוד הזה.'); }
+      if (nextPlan) plan = nextPlan;
+      commit(); renderPlan();
+      toast('הגיבוי יובא בהצלחה');
+    } catch { toast('הקובץ לא תקין. צריך קובץ גיבוי שיוצא מהעמוד הזה.'); }
   };
 
   // =================== work plan (from the developer's handover letters) ===================
-  const PKEY = 'tashlumim.plan.v1';
   const MAIL = (v, label) => ({ label, v, href: 'mailto:' + v });
   const TEL = (v, label) => ({ label, v, href: 'tel:' + v.replace(/[^\d*+]/g, '') });
   const ILANA_MAIL = MAIL('ilana@yahallom.co.il', 'מנהלת הכספים');
@@ -806,7 +964,7 @@
   }
   let plan;
   try { plan = cleanPlan(JSON.parse(localStorage.getItem(PKEY))); } catch { plan = cleanPlan(null); }
-  const savePlan = () => { try { localStorage.setItem(PKEY, JSON.stringify(plan)); saveFailed = false; } catch { saveFailed = true; } };
+  const savePlan = save;
 
   const val = x => typeof x === 'function' ? x() : x;
   const shown = x => !x.when || plan.mortgage !== 'no';
@@ -970,6 +1128,7 @@
   renderPlan();
 
   render();
+  initCloud();
 })();
 </script>
 </body>
